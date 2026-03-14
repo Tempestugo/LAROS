@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { fabric } from 'fabric';
 
-const StoryCanvas = forwardRef(({ onSelectObject, onClearSelection }, ref) => {
+const StoryCanvas = forwardRef(({ storyIndex, story, fotoUrl, logoUrl, onSelectObject, onClearSelection, onUpdateStory }, ref) => {
   const canvasEl = useRef(null);
   const canvasInstance = useRef(null);
   const wrapperRef = useRef(null);
+  const loadedIndexRef = useRef(-1);
 
   // Inicialização do Canvas
   useEffect(() => {
@@ -35,24 +36,37 @@ const StoryCanvas = forwardRef(({ onSelectObject, onClearSelection }, ref) => {
     canvas.on('selection:updated', (e) => onSelectObject(e.selected[0]));
     canvas.on('selection:cleared', () => onClearSelection());
 
+    // Auto-Save listeners
+    const notifyChange = () => {
+      if (onUpdateStory) onUpdateStory(canvasInstance.current.toJSON());
+    };
+    canvas.on('object:modified', notifyChange);
+    canvas.on('text:changed', notifyChange);
+
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       canvas.dispose();
     };
   }, []); // Dependências vazias para rodar apenas uma vez
 
-  // Expõe métodos para o componente pai (EditorScreen)
-  useImperativeHandle(ref, () => ({
-    getCanvas: () => canvasInstance.current,
-    
-    // Lógica do Template A convertida para Fabric.js
-    loadTemplateA: (data) => {
-      const canvas = canvasInstance.current;
+  // Lógica de Carregamento Inteligente
+  useEffect(() => {
+    if (!story || !canvasInstance.current || storyIndex === loadedIndexRef.current) return;
+
+    const canvas = canvasInstance.current;
+
+    // Prioridade 1: Carregar estado salvo (Edições do utilizador)
+    if (story.fabricData) {
+      canvas.loadFromJSON(story.fabricData, () => {
+        canvas.renderAll();
+        loadedIndexRef.current = storyIndex;
+      });
+    } else {
+      // Prioridade 2: Renderização Padrão (Template A)
       canvas.clear();
 
-      // 1. Fundo (Estático)
-      if (data.fotoUrl) {
-        fabric.Image.fromURL(data.fotoUrl, (img) => {
+      if (fotoUrl) {
+        fabric.Image.fromURL(fotoUrl, (img) => {
           const scale = Math.max(1080 / img.width, 1920 / img.height);
           img.set({
             originX: 'center', originY: 'center',
@@ -64,28 +78,33 @@ const StoryCanvas = forwardRef(({ onSelectObject, onClearSelection }, ref) => {
         }, { crossOrigin: 'anonymous' });
       }
 
-      // 2. Pill de Título (Editável)
-      const text = new fabric.IText(data.titulo || 'Escreva seu título', {
+      const text = new fabric.IText(story.titulo || 'Escreva seu título', {
         fontFamily: 'Fraunces',
         fontSize: 78, fontWeight: 900,
-        fill: data.cor || '#C47B2B',
+        fill: story.cor || '#C47B2B',
         originX: 'center', originY: 'center',
-        textBackgroundColor: '#FFF8EE', // Simplificação para não precisar de um Group complexo
-        padding: 22, // Simula o padding da Pill
+        textBackgroundColor: '#FFF8EE',
+        padding: 22,
       });
-      
       text.set({ left: 540, top: 190 });
       canvas.add(text);
 
-      // 3. Logo (Arrastável)
-      if (data.logoUrl) {
-        fabric.Image.fromURL(data.logoUrl, (img) => {
+      if (logoUrl) {
+        fabric.Image.fromURL(logoUrl, (img) => {
           img.scaleToHeight(108);
           img.set({ left: 72, top: 1920 - 145 - 108 });
           canvas.add(img);
         }, { crossOrigin: 'anonymous' });
       }
+
+      loadedIndexRef.current = storyIndex;
     }
+  }, [storyIndex, story, fotoUrl, logoUrl]);
+
+  // Expõe métodos para o componente pai (EditorScreen)
+  useImperativeHandle(ref, () => ({
+    getCanvas: () => canvasInstance.current,
+    forceReload: () => { loadedIndexRef.current = -1; }
   }));
 
   return (
