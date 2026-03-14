@@ -1,8 +1,56 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import StoryCanvas from './components/StoryCanvas';
 import './EditorScreen.css';
 
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
+  const canvasRef = useRef(null);
+  const [activeObject, setActiveObject] = useState(null);
   
+  // Função para testar a renderização do Template A
+  const addTestStory = () => {
+    const testData = {
+      titulo: "Olha esse lanche pronto",
+      cor: "#C47B2B",
+      fotoUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1080&auto=format&fit=crop", // Imagem genérica para teste
+      logoUrl: null // Pode ser '/uploads/logos/logo.jpg' futuramente
+    };
+    
+    // Adiciona o story ao projeto para sair da Welcome Zone
+    const updatedProject = { ...project, stories: [testData] };
+    setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+    
+    // Pede ao Canvas para renderizar
+    setTimeout(() => {
+      if (canvasRef.current) canvasRef.current.loadTemplateA(testData);
+    }, 100); // Aguarda o componente montar
+  };
+
+  const handleColorChange = (e) => {
+    if (!activeObject || !canvasRef.current) return;
+    activeObject.set('fill', e.target.value);
+    canvasRef.current.getCanvas().renderAll();
+  };
+
+  const handleExport = () => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current.getCanvas();
+    // Multiplica a resolução por 3 (simula alta qualidade)
+    const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 3 });
+    
+    // Dispara download
+    const link = document.createElement('a');
+    link.download = `story-${Date.now()}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
+  const handleSaveState = () => {
+    if (!canvasRef.current) return;
+    const json = canvasRef.current.getCanvas().toJSON();
+    localStorage.setItem('laros_canvas_save', JSON.stringify(json));
+    alert("Estado salvo no LocalStorage!");
+  };
+
   return (
     <div className="editor-screen">
       <header className="editor-toolbar">
@@ -45,10 +93,65 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 <h3>Adicionar Fotos</h3>
                 <p>Faça upload de imagens para a galeria do projeto</p>
               </div>
+              <div className="action-card" onClick={addTestStory}>
+                <div className="icon-wrapper">
+                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--accent)" strokeWidth="1.5" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </div>
+                <h3>Testar Editor</h3>
+                <p>Abra o canvas interativo com um template de demonstração</p>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="editor-layout">Editor de Canvas entrará aqui</div>
+          <div className="editor-layout">
+            {/* 1. Sidebar Esquerda */}
+            <div className="sidebar-left">
+               <div className="story-list-header">Stories ({project.stories?.length})</div>
+               {/* Futura lista de thumbnails aqui */}
+            </div>
+            
+            {/* 2. Área do Canvas */}
+            <div className="canvas-area">
+              <StoryCanvas 
+                ref={canvasRef} 
+                onSelectObject={setActiveObject} 
+                onClearSelection={() => setActiveObject(null)} 
+              />
+            </div>
+            
+            {/* 3. Painel de Propriedades Direita */}
+            <div className="sidebar-right">
+               <div className="panel-header">Propriedades</div>
+               
+               {activeObject ? (
+                 <div className="properties-form">
+                    <div className="form-group">
+                      <label>Cor do Preenchimento</label>
+                      <div className="color-input-wrapper">
+                        <input type="color" value={activeObject.fill || '#ffffff'} onChange={handleColorChange} />
+                        <span>{activeObject.fill || '#ffffff'}</span>
+                      </div>
+                    </div>
+                    {activeObject.type === 'i-text' && (
+                       <div className="form-group">
+                          <label>Tamanho da Fonte</label>
+                          <input type="number" defaultValue={activeObject.fontSize} onChange={(e) => {
+                            activeObject.set('fontSize', parseInt(e.target.value));
+                            canvasRef.current.getCanvas().renderAll();
+                          }} />
+                       </div>
+                    )}
+                 </div>
+               ) : (
+                 <div className="empty-properties">Selecione um objeto no canvas para editar suas propriedades.</div>
+               )}
+
+               <div className="panel-actions">
+                  <button className="btn-secondary" onClick={handleSaveState}>Salvar Projeto</button>
+                  <button className="btn-primary" onClick={handleExport}>Gerar Preview</button>
+               </div>
+            </div>
+          </div>
         )}
       </main>
     </div>
