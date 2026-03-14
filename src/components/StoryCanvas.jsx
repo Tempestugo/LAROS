@@ -187,11 +187,34 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
     canvas.on('object:modified', notifyChange);
     canvas.on('text:changed', notifyChange);
 
+    // 1. Atalhos de Teclado (Apagar Elementos)
+    const handleKeyDown = (e) => {
+      // Ignora se estiver a escrever num input normal do DOM
+      if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') return;
+      
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const canvas = canvasInstance.current;
+        if (!canvas) return;
+
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length === 0) return;
+
+        // Regra Crítica: Verifica se algum objeto selecionado está em modo edição
+        if (activeObjects.some(obj => obj.isEditing)) return;
+
+        activeObjects.forEach(obj => canvas.remove(obj));
+        canvas.discardActiveObject();
+        if (onUpdateStory) onUpdateStory(canvas.toJSON());
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('keydown', handleKeyDown);
       canvas.dispose();
     };
-  }, []); // Dependências vazias para rodar apenas uma vez
+  }, [onUpdateStory]); // O onUpdateStory precisa ser atualizado caso as closures mudem
 
   // Lógica de Carregamento Inteligente
   useEffect(() => {

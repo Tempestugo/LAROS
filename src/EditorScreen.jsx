@@ -145,6 +145,36 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     e.target.value = '';
   };
 
+  // --- Ações na Sidebar Esquerda (Duplicar e Apagar) ---
+
+  const handleDuplicateStory = (e, index) => {
+    e.stopPropagation();
+    const storyToCopy = project.stories[index];
+    // Fazemos um Deep Copy seguro (inclui as posições exatas do fabricData)
+    const newStory = JSON.parse(JSON.stringify(storyToCopy));
+    
+    const updatedStories = [...project.stories];
+    updatedStories.splice(index + 1, 0, newStory); // Insere logo a seguir
+    setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
+    setCurrentStoryIndex(index + 1);
+    setActiveObject(null);
+    if (canvasRef.current) canvasRef.current.forceReload();
+  };
+
+  const handleDeleteStory = (e, index) => {
+    e.stopPropagation();
+    const updatedStories = [...project.stories];
+    updatedStories.splice(index, 1);
+    
+    setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
+    
+    // Ajusta o index atual se necessário para não quebrar a view
+    const newIndex = index < currentStoryIndex ? currentStoryIndex - 1 : (index === currentStoryIndex ? Math.max(0, index - 1) : currentStoryIndex);
+    setCurrentStoryIndex(newIndex);
+    setActiveObject(null);
+    if (canvasRef.current) canvasRef.current.forceReload();
+  };
+
   // --- Sincronização Canvas -> Estado ---
   
   const handleUpdateStory = (fabricData) => {
@@ -194,6 +224,14 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   };
 
   const currentStory = project.stories?.[currentStoryIndex];
+
+  // 5. Workflow e Validação Dinâmica
+  const hasMissingImage = (story) => {
+    if (story.fotoUrl) return false; // Tem imagem atribuída manualmente
+    if (!story.foto) return true;    // Nem sequer tem foto nomeada
+    if (!project.fotos || project.fotos.length === 0) return true;
+    return !project.fotos.some(f => f.name.toLowerCase().startsWith(story.foto.toLowerCase()));
+  };
 
   return (
     <div className="editor-screen">
@@ -269,7 +307,17 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                      }}
                    >
                      <span className="story-index">{index + 1}</span>
-                     <span className="story-title">{story.titulo || 'Sem título'}</span>
+                     <span className="story-title" title={story.titulo}>{story.titulo || 'Sem título'}</span>
+                     {hasMissingImage(story) && <span className="warning-icon" title="Imagem ausente">⚠️</span>}
+                     
+                     <div className="story-actions">
+                        <button title="Duplicar" onClick={(e) => handleDuplicateStory(e, index)}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                        <button title="Apagar" className="delete-btn" onClick={(e) => handleDeleteStory(e, index)}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                     </div>
                    </div>
                  ))}
                </div>
@@ -295,25 +343,26 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                
                {/* Controlos Gerais do Story */}
                <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
-                 <div className="form-group">
-                   <label>Template</label>
-                   <select 
-                     value={currentStory?.template || 'A'} 
-                     onChange={(e) => {
-                       const updatedStories = [...project.stories];
-                       updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], template: e.target.value };
-                       delete updatedStories[currentStoryIndex].fabricData; // Força render do zero
-                       setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
-                       setActiveObject(null);
-                       if (canvasRef.current) canvasRef.current.forceReload();
-                     }}
-                   >
-                     <option value="A">Template A (Pill Topo)</option>
-                     <option value="B">Template B (Highlight Esq.)</option>
-                     <option value="C">Template C (Foto Dominante)</option>
-                     <option value="D">Template D (Centralizado)</option>
-                     <option value="E">Template E (Enquete)</option>
-                   </select>
+                 <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: '0.5rem' }}>Template Visual</label>
+                 <div className="template-grid">
+                   {['A', 'B', 'C', 'D', 'E'].map(tpl => (
+                     <div 
+                       key={tpl}
+                       className={`template-card tpl-${tpl} ${currentStory?.template === tpl ? 'active' : ''}`}
+                       onClick={() => {
+                          const updatedStories = [...project.stories];
+                          updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], template: tpl };
+                          delete updatedStories[currentStoryIndex].fabricData; // Limpa as edições guardadas do template antigo
+                          setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
+                          setActiveObject(null);
+                          if (canvasRef.current) canvasRef.current.forceReload();
+                       }}
+                       title={`Template ${tpl}`}
+                     >
+                       <div className="tpl-preview"></div>
+                       <span>{tpl}</span>
+                     </div>
+                   ))}
                  </div>
                  <button className="btn-secondary" onClick={() => bgInputRef.current?.click()}>Alterar Imagem de Fundo</button>
                </div>
@@ -328,14 +377,29 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                       </div>
                     </div>
                     {activeObject.type === 'i-text' && (
-                       <div className="form-group">
-                          <label>Tamanho da Fonte</label>
-                          <input type="number" defaultValue={activeObject.fontSize} onChange={(e) => {
-                            activeObject.set('fontSize', parseInt(e.target.value));
-                            canvasRef.current.getCanvas().renderAll();
-                            triggerManualSave();
-                          }} />
-                       </div>
+                       <>
+                         <div className="form-group">
+                            <label>Tamanho da Fonte</label>
+                            <input type="number" value={activeObject.fontSize || 30} onChange={(e) => {
+                              activeObject.set('fontSize', parseInt(e.target.value));
+                              canvasRef.current.getCanvas().renderAll();
+                              triggerManualSave();
+                            }} />
+                         </div>
+                         <div className="form-group">
+                            <label>Fonte (Família)</label>
+                            <select value={activeObject.fontFamily} onChange={(e) => {
+                              activeObject.set('fontFamily', e.target.value);
+                              canvasRef.current.getCanvas().renderAll();
+                              triggerManualSave();
+                            }}>
+                              <option value="Fraunces">Fraunces (Serif)</option>
+                              <option value="Playfair Display">Playfair Display (Serif)</option>
+                              <option value="Nunito">Nunito (Sans)</option>
+                              <option value="Lato">Lato (Sans)</option>
+                            </select>
+                         </div>
+                       </>
                     )}
                  </div>
                ) : (
