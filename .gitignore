@@ -1,0 +1,8 @@
+# Dependencies
+/node_modules
+
+# Generated files from script
+/output
+
+# Environment variables
+.env
