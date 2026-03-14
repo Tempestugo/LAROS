@@ -1,41 +1,32 @@
-import React, { useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import ProjectsScreen from './screens/ProjectsScreen';
+import EditorScreen from './screens/EditorScreen';
+import { v4 as uuidv4 } from 'uuid';
 
 function App() {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [activeProjectId, setActiveProjectId] = useState(null);
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    setMessage('Iniciando geração, por favor aguarde...');
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Falha ao gerar imagens.');
-      }
-      setMessage(data.message);
-    } catch (error) {
-      setMessage(`Erro: ${error.message}`);
-    } finally {
-      setLoading(false);
+  // Carregar projetos do localStorage na inicialização
+  useEffect(() => {
+    const savedProjects = localStorage.getItem('laros_projects');
+    if (savedProjects) {
+      setProjects(JSON.parse(savedProjects));
     }
-  };
+  }, []);
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Gerador de Imagens LAROS</h1>
-        <p>Clique no botão para iniciar a geração de imagens a partir do arquivo <code>dados.csv</code>.</p>
-        <button onClick={handleGenerate} disabled={loading}>
-          {loading ? 'Gerando...' : 'Gerar Imagens'}
-        </button>
-        {message && <p className="message">{message}</p>}
-      </header>
-    </div>
-  );
+  // Salvar projetos no localStorage sempre que eles mudarem
+  useEffect(() => {
+    localStorage.setItem('laros_projects', JSON.stringify(projects));
+  }, [projects]);
+
+  const activeProject = projects.find(p => p.id === activeProjectId);
+
+  if (!activeProject) {
+    return <ProjectsScreen projects={projects} setProjects={setProjects} setActiveProjectId={setActiveProjectId} />;
+  }
+
+  return <EditorScreen project={activeProject} setProjects={setProjects} setActiveProjectId={setActiveProjectId} />;
 }
 
 export default App;
