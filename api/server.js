@@ -15,11 +15,15 @@ const FOTOS_DIR = path.join(UPLOADS_DIR, 'fotos');
 const LOGOS_DIR = path.join(UPLOADS_DIR, 'logos');
 
 // Garante que os diretórios de upload existam
-[UPLOADS_DIR, FOTOS_DIR, LOGOS_DIR].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+try {
+  [UPLOADS_DIR, FOTOS_DIR, LOGOS_DIR].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+} catch (error) {
+  console.error("⚠️ Aviso: Erro ao criar diretórios de upload. Verifique as permissões.", error);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
