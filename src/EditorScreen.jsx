@@ -10,6 +10,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const csvInputRef = useRef(null);
   const logoInputRef = useRef(null);
   const fotosInputRef = useRef(null);
+  const bgInputRef = useRef(null);
   const [activeObject, setActiveObject] = useState(null);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState('');
@@ -119,6 +120,31 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     e.target.value = '';
   };
 
+  const handleBgUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('fotos', file); // Utiliza a rota de array de fotos para coerência
+
+    try {
+      const res = await fetch('/api/upload/fotos', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.fotos && data.fotos.length > 0) {
+        const url = data.fotos[0].url;
+        
+        if (canvasRef.current) canvasRef.current.setBackground(url);
+
+        // Guarda no estado a imagem específica e adiciona-a à galeria geral
+        const updatedStories = [...project.stories];
+        updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fotoUrl: url };
+        const updatedProject = { ...project, fotos: [...(project.fotos || []), ...data.fotos], stories: updatedStories };
+        setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+      }
+    } catch (err) { console.error("Erro no upload do fundo:", err); }
+    e.target.value = '';
+  };
+
   // --- Sincronização Canvas -> Estado ---
   
   const handleUpdateStory = (fabricData) => {
@@ -168,7 +194,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   };
 
   const currentStory = project.stories?.[currentStoryIndex];
-  const currentFoto = currentStory ? project.fotos?.find(f => f.name.toLowerCase().startsWith(currentStory.foto.toLowerCase())) : null;
 
   return (
     <div className="editor-screen">
@@ -176,6 +201,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       <input type="file" ref={csvInputRef} style={{ display: 'none' }} accept=".csv" onChange={handleCsvUpload} />
       <input type="file" ref={logoInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleLogoUpload} />
       <input type="file" ref={fotosInputRef} style={{ display: 'none' }} accept="image/*" multiple onChange={handleFotosUpload} />
+      <input type="file" ref={bgInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleBgUpload} />
 
       <header className="editor-toolbar">
          <div className="toolbar-left">
@@ -255,7 +281,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 ref={canvasRef} 
                 storyIndex={currentStoryIndex}
                 story={currentStory}
-                fotoUrl={currentFoto ? currentFoto.url : (currentStory?.fotoUrl || null)}
+                assets={project.fotos}
                 logoUrl={project.logoUrl}
                 onSelectObject={setActiveObject} 
                 onClearSelection={() => setActiveObject(null)}
@@ -267,6 +293,31 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
             <div className="sidebar-right">
                <div className="panel-header">Propriedades</div>
                
+               {/* Controlos Gerais do Story */}
+               <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+                 <div className="form-group">
+                   <label>Template</label>
+                   <select 
+                     value={currentStory?.template || 'A'} 
+                     onChange={(e) => {
+                       const updatedStories = [...project.stories];
+                       updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], template: e.target.value };
+                       delete updatedStories[currentStoryIndex].fabricData; // Força render do zero
+                       setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
+                       setActiveObject(null);
+                       if (canvasRef.current) canvasRef.current.forceReload();
+                     }}
+                   >
+                     <option value="A">Template A (Pill Topo)</option>
+                     <option value="B">Template B (Highlight Esq.)</option>
+                     <option value="C">Template C (Foto Dominante)</option>
+                     <option value="D">Template D (Centralizado)</option>
+                     <option value="E">Template E (Enquete)</option>
+                   </select>
+                 </div>
+                 <button className="btn-secondary" onClick={() => bgInputRef.current?.click()}>Alterar Imagem de Fundo</button>
+               </div>
+
                {activeObject ? (
                  <div className="properties-form">
                     <div className="form-group">
