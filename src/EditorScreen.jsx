@@ -56,6 +56,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     formData.append('csv', file);
 
     try {
+      // 1. Busca fotos atuais no servidor para garantir o Match
+      const fotosRes = await fetch('/api/fotos');
+      const fotosData = await fotosRes.json();
+      const serverFotos = fotosData.fotos || [];
+      const allFotos = [...serverFotos, ...(project.fotos || [])];
+
       const res = await fetch('/api/upload/csv', { method: 'POST', body: formData });
       const data = await res.json();
 
@@ -72,15 +78,15 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 subtitulo: row.Subtitulo || values[2] || '',
                 cta: row.CTA || values[3] || '',
                 foto: row.Nome_Foto || values[4] || '',
-                // Faz Match imediato se as fotos já estiverem no projeto
-                fotoUrl: project.fotos?.find(f => f.name.toLowerCase().startsWith((row.Nome_Foto || values[4] || '').toLowerCase()))?.url || null,
+                // Faz Match imediato cruzando as fotos do servidor
+                fotoUrl: allFotos.find(f => f.name.toLowerCase().startsWith((row.Nome_Foto || values[4] || '').toLowerCase()))?.url || null,
                 cor: row.Cor || values[5] || project.defaultCor || '#C47B2B',
                 template: row.Template || values[6] || 'A',
                 endereco: row.Endereco || values[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
               };
             });
 
-            const updatedProject = { ...project, stories: parsedStories };
+            const updatedProject = { ...project, fotos: allFotos, stories: parsedStories };
             setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
             setCurrentStoryIndex(0); // Seleciona automaticamente o primeiro story importado
             if (canvasRef.current && canvasRef.current.forceReload) {

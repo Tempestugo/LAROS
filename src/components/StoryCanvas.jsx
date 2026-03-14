@@ -173,6 +173,12 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
   const canvasInstance = useRef(null);
   const wrapperRef = useRef(null);
   const loadedIndexRef = useRef(-1);
+  
+  // Ref para as callbacks para evitar recriar o canvas quando o state muda no pai
+  const callbacks = useRef({ onSelectObject, onClearSelection, onUpdateStory });
+  useEffect(() => {
+    callbacks.current = { onSelectObject, onClearSelection, onUpdateStory };
+  });
 
   // Inicialização do Canvas
   useEffect(() => {
@@ -199,13 +205,13 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
     window.addEventListener('resize', resizeCanvas);
 
     // Eventos de Seleção
-    canvas.on('selection:created', (e) => onSelectObject(e.selected[0]));
-    canvas.on('selection:updated', (e) => onSelectObject(e.selected[0]));
-    canvas.on('selection:cleared', () => onClearSelection());
+    canvas.on('selection:created', (e) => callbacks.current.onSelectObject && callbacks.current.onSelectObject(e.selected[0]));
+    canvas.on('selection:updated', (e) => callbacks.current.onSelectObject && callbacks.current.onSelectObject(e.selected[0]));
+    canvas.on('selection:cleared', () => callbacks.current.onClearSelection && callbacks.current.onClearSelection());
 
     // Auto-Save listeners
     const notifyChange = () => {
-      if (onUpdateStory) onUpdateStory(canvasInstance.current.toJSON());
+      if (callbacks.current.onUpdateStory) callbacks.current.onUpdateStory(canvasInstance.current.toJSON());
     };
     canvas.on('object:modified', notifyChange);
     canvas.on('text:changed', notifyChange);
@@ -226,7 +232,7 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
 
         activeObjects.forEach(obj => canvas.remove(obj));
         canvas.discardActiveObject();
-        if (onUpdateStory) onUpdateStory(canvas.toJSON());
+        if (callbacks.current.onUpdateStory) callbacks.current.onUpdateStory(canvas.toJSON());
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -236,7 +242,7 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
       window.removeEventListener('keydown', handleKeyDown);
       canvas.dispose();
     };
-  }, [onUpdateStory]); // O onUpdateStory precisa ser atualizado caso as closures mudem
+  }, []); // Sem dependências! Inicia apenas uma vez. Evita ecrã preto!
 
   // Função principal de Renderização (Assíncrona para Exportação)
   const renderStoryAsync = async (targetStory, targetAssets, targetLogo) => {
@@ -286,7 +292,7 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
     setBackground: (url) => {
       if (!canvasInstance.current) return;
       setCanvasBackgroundAsync(canvasInstance.current, url).then(() => {
-        if (onUpdateStory) onUpdateStory(canvasInstance.current.toJSON());
+        if (callbacks.current.onUpdateStory) callbacks.current.onUpdateStory(canvasInstance.current.toJSON());
       });
     },
     forceReload: () => { loadedIndexRef.current = -1; }

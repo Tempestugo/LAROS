@@ -61,44 +61,32 @@ app.post('/api/upload/logo', uploadLogo.single('logo'), (req, res) => {
   })
 })
 
+// ─── Upload de fotos ──────────────────────────────────────────────────────────
+const storageFotos = multer.diskStorage({
+  destination: FOTOS_DIR,
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`)
+  },
+})
+const uploadFotos = multer({ storage: storageFotos, limits: { fileSize: 20 * 1024 * 1024 } })
+
+app.post('/api/upload/fotos', uploadFotos.array('fotos', 50), (req, res) => {
+  if (!req.files || !req.files.length) return res.status(400).json({ error: 'Nenhum arquivo enviado' })
+  res.json({
+    fotos: req.files.map(f => ({
+      url: `/uploads/fotos/${f.filename}`,
+      filename: f.filename,
+      name: parse(f.originalname).name // Nome original é crucial para o Match automático!
+    }))
+  })
+})
+
 // ─── Upload + parse de CSV ────────────────────────────────────────────────────
 const uploadCSV = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } })
 
-function parseCSV(buffer, separator) {
-  return new Promise((resolve) => {
-    const results = []
-    const stream  = Readable.from(buffer.toString('utf-8'))
-    stream
-      .pipe(csv({ separator }))
-      .on('data', (row) => {
-        const v    = Object.values(row)
-        const foto = v[4] ? v[4].trim() : ''
-        if (!foto || foto === 'Nome_Foto') return
-        results.push({
-          dia:       v[0] ? v[0].trim() : '',
-          titulo:    v[1] ? v[1].trim() : '',
-          subtitulo: v[2] ? v[2].trim() : '',
-          cta:       v[3] ? v[3].trim() : '',
-          foto,
-          cor:      v[5] ? v[5].trim() : '#C47B2B',
-          template: v[6] ? v[6].trim().toUpperCase() : 'A',
-          endereco: v[7] && v[7].trim() ? v[7].trim() : '',
-        })
-      })
-      .on('end', () => resolve(results))
-  })
-}
-
 app.post('/api/upload/csv', uploadCSV.single('csv'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' })
-  try {
-    let stories = await parseCSV(req.file.buffer, ';')
-    if (!stories.length) stories = await parseCSV(req.file.buffer, ',')
-    if (!stories.length) return res.status(422).json({ error: 'CSV sem linhas válidas' })
-    res.json({ stories, total: stories.length })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
+  res.json({ content: req.file.buffer.toString('utf-8') })
 })
 
 // ─── Lista fotos e logos disponíveis ─────────────────────────────────────────
