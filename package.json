@@ -9,7 +9,7 @@
     "dev-api": "nodemon api/server.js",
     "dev-ui": "vite",
     "build": "vite build",
-    "postinstall": "npm run build",
+    "postinstall": "chmod +x node_modules/esbuild/bin/esbuild 2>/dev/null || true; chmod +x node_modules/@esbuild/*/bin/esbuild 2>/dev/null || true; npm run build",
     "start": "node api/server.js"
   },
   "keywords": [],
