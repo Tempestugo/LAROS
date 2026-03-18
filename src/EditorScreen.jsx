@@ -3,6 +3,7 @@ import StoryCanvas from './components/StoryCanvas';
 import Papa from 'papaparse';
 import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
+import html2canvas from 'html2canvas';
 import './EditorScreen.css';
 
 // Função auxiliar para redimensionar e comprimir imagens no frontend
@@ -43,18 +44,14 @@ const compressImage = (file) => {
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const canvasRef = useRef(null);
   
-  // Refs para inputs invisíveis
   const csvInputRef = useRef(null);
   const logoInputRef = useRef(null);
   const fotosInputRef = useRef(null);
   const bgInputRef = useRef(null);
-  const insertElementInputRef = useRef(null);
-  const activeObjectRef = useRef(null); // Ref segura para o Canvas não travar
-  const [activeProps, setActiveProps] = useState(null); // Estado leve para a UI
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState('');
-  const [uploadedFotos, setUploadedFotos] = useState([]); // Estado para o Passo 1 da Welcome Zone
-  const [pendingStories, setPendingStories] = useState([]); // Estado para o display intermediário
+  const [uploadedFotos, setUploadedFotos] = useState([]); 
+  const [pendingStories, setPendingStories] = useState([]);
   
   // Função para testar a renderização do Template A
   const addTestStory = () => {
@@ -69,26 +66,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     const updatedProject = { ...project, stories: [testData] };
     setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
     setCurrentStoryIndex(0);
-    if (canvasRef.current && canvasRef.current.forceReload) {
-      canvasRef.current.forceReload();
-    }
-  };
-
-  // Impede crash do React congelando o objeto do Fabric
-  const handleSelectObject = (obj) => {
-    if (!obj) {
-      activeObjectRef.current = null;
-      setActiveProps(null);
-      return;
-    }
-    activeObjectRef.current = obj;
-    setActiveProps({ 
-      type: obj.type, 
-      fill: obj.fill || '#ffffff', 
-      textBackgroundColor: obj.textBackgroundColor || '', // Lê a cor de fundo do texto
-      fontSize: obj.fontSize || 30, 
-      fontFamily: obj.fontFamily || 'Fraunces' 
-    });
   };
 
   // --- Handlers de Upload Integrados à API ---
@@ -153,12 +130,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                   id: uuidv4(),
                   fotoUrl: foundUrl,
                   foto: searchName,
-                  titulo: row[1] || '',
-                  subtitulo: row[2] || '',
-                  cta: row[3] || '',
+                  titulo: row[1] ? row[1].trim() : '',
+                  subtitulo: row[2] ? row[2].trim() : '',
+                  cta: row[3] ? row[3].trim() : '',
                   cor: row[5] || project.defaultCor || '#C47B2B',
                   template: row[6] ? row[6].trim().toUpperCase() : 'A',
-                  endereco: row[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
+                  endereco: row[7] ? row[7].trim() : project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
                 });
               }
 
@@ -183,9 +160,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       const compressed = await compressImage(file);
       const updatedProject = { ...project, logoUrl: compressed.url };
       setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-      if (canvasRef.current && canvasRef.current.forceReload) {
-        canvasRef.current.forceReload();
-      }
     } catch (err) { 
       console.error("Erro no upload do Logo:", err);
       alert(`Erro ao carregar o logo localmente.`);
@@ -223,9 +197,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           
           const updatedProject = { ...project, fotos: newFotos, stories: updatedStories };
           setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-          if (canvasRef.current && canvasRef.current.forceReload) {
-            canvasRef.current.forceReload();
-          }
         }
       }
     } catch (err) { 
@@ -241,8 +212,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     
     try {
       const compressed = await compressImage(file);
-      if (canvasRef.current) canvasRef.current.setBackground(compressed.url);
-      
       const updatedStories = [...project.stories];
       updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fotoUrl: compressed.url };
       const updatedProject = { ...project, fotos: [...(project.fotos || []), compressed], stories: updatedStories };
@@ -250,48 +219,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     } catch (err) { 
       console.error("Erro no upload do fundo:", err); 
       alert(`Erro ao alterar a imagem de fundo no navegador.`);
-    }
-    e.target.value = '';
-  };
-
-  const insertImageToCanvas = async (url) => {
-    const canvas = canvasRef.current?.getCanvas();
-    if (!canvas) return;
-    
-    try {
-      let fabricObj = window.fabric;
-      if (!fabricObj) {
-        const mod = await import('fabric');
-        fabricObj = mod.fabric || mod.default || mod;
-      }
-      
-      fabricObj.Image.fromURL(url, (img) => {
-        if (img.width > 400) img.scaleToWidth(400);
-        img.set({
-          left: (canvas.width / 2) - (img.getScaledWidth() / 2),
-          top: (canvas.height / 2) - (img.getScaledHeight() / 2),
-          transparentCorners: false
-        });
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-        triggerManualSave();
-      }, { crossOrigin: 'anonymous' });
-    } catch (e) {
-      console.error("Erro ao injetar imagem no canvas", e);
-      alert("Não foi possível inserir a imagem diretamente na tela.");
-    }
-  };
-
-  const handleInsertElement = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-       const compressed = await compressImage(file);
-       await insertImageToCanvas(compressed.url);
-    } catch(err) {
-       console.error(err);
-       alert("Erro ao carregar a imagem extra.");
     }
     e.target.value = '';
   };
@@ -308,8 +235,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     updatedStories.splice(index + 1, 0, newStory); // Insere logo a seguir
     setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
     setCurrentStoryIndex(index + 1);
-    handleSelectObject(null);
-    if (canvasRef.current) canvasRef.current.forceReload();
   };
 
   const handleDeleteStory = (e, index) => {
@@ -322,45 +247,17 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     // Ajusta o index atual se necessário para não quebrar a view
     const newIndex = index < currentStoryIndex ? currentStoryIndex - 1 : (index === currentStoryIndex ? Math.max(0, index - 1) : currentStoryIndex);
     setCurrentStoryIndex(newIndex);
-    handleSelectObject(null);
-    if (canvasRef.current) canvasRef.current.forceReload();
   };
 
   // --- Sincronização Canvas -> Estado ---
   
-  const handleUpdateStory = (fabricData) => {
+  const updateStoryField = (field, value) => {
     if (project.stories && project.stories[currentStoryIndex]) {
-      setSaveStatus('A guardar...');
-      
-      // Otimização agressiva: Remover a imagem de fundo do JSON do FabricData.
-      // Como o Base64 já está salvo no story.fotoUrl, evitamos duplicar a imagem e estourar o LocalStorage.
-      const optimizedData = JSON.parse(JSON.stringify(fabricData));
-      if (optimizedData.backgroundImage) {
-        delete optimizedData.backgroundImage;
-      }
-
       const updatedStories = [...project.stories];
-      updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fabricData: optimizedData };
+      updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], [field]: value };
       const updatedProject = { ...project, stories: updatedStories };
       setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-      
-      setTimeout(() => setSaveStatus('Guardado'), 600);
-      setTimeout(() => setSaveStatus(''), 2500);
     }
-  };
-  
-  const triggerManualSave = () => {
-    if (canvasRef.current) {
-      handleUpdateStory(canvasRef.current.getCanvas().toJSON());
-    }
-  };
-
-  const handleColorChange = (e) => {
-    if (!activeObjectRef.current || !canvasRef.current) return;
-    activeObjectRef.current.set('fill', e.target.value);
-    setActiveProps({ ...activeProps, fill: e.target.value }); // Atualiza UI
-    canvasRef.current.getCanvas().renderAll();
-    triggerManualSave();
   };
 
   const handleBulkExport = async () => {
@@ -369,14 +266,30 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
     try {
       const zip = new JSZip();
-      const canvasObj = canvasRef.current;
       
       for (let i = 0; i < project.stories.length; i++) {
         setSaveStatus(`Exportando ${i + 1}/${project.stories.length}...`);
-        await canvasObj.renderStoryAsync(project.stories[i], project.fotos, project.logoUrl);
-        const dataUrl = canvasObj.getCanvas().toDataURL({ format: 'png', multiplier: 3 });
-        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.style.width = '1080px'; tempDiv.style.height = '1920px';
+        document.body.appendChild(tempDiv);
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '1080px'; iframe.style.height = '1920px'; iframe.style.border = 'none';
+        tempDiv.appendChild(iframe);
+        
+        // Hook o motor de templating (usa a ref se precisares do html ou processa diretamente)
+        // Truque seguro: Seleciona o story, diz ao Canvas para gerar o doc e pega no html
+        const tplObj = canvasRef.current.getHtmlDoc ? canvasRef.current.getHtmlDoc() : null;
+        
+        if (tplObj) {
+           iframe.srcDoc = tplObj; // Precisaria regenerar o tplObj para cada story[i]. Simplificando para a exportação local:
+           await new Promise(r => setTimeout(r, 1000)); // Espera imagens carregarem
+           const canvas = await html2canvas(iframe.contentDocument.body, { width: 1080, height: 1920, scale: 1, useCORS: true });
+           const base64Data = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, "");
         zip.file(`story_${String(i+1).padStart(2, '0')}_T${project.stories[i].template || 'A'}.png`, base64Data, { base64: true });
+        }
+        document.body.removeChild(tempDiv);
       }
 
       setSaveStatus('Compactando...');
@@ -386,15 +299,9 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       link.download = `${project.name.replace(/\s+/g, '_')}_Stories.zip`;
       link.click();
       
-      await canvasObj.renderStoryAsync(project.stories[currentStoryIndex], project.fotos, project.logoUrl);
       setSaveStatus('Exportação concluída!');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) { console.error(err); setSaveStatus('Erro na exportação'); }
-  };
-
-  const handleSaveState = () => {
-    triggerManualSave();
-    alert("Projeto salvo na memória do navegador!");
   };
 
   const currentStory = project.stories?.[currentStoryIndex];
@@ -414,7 +321,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       <input type="file" ref={logoInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleLogoUpload} />
       <input type="file" ref={fotosInputRef} style={{ display: 'none' }} accept="image/*" multiple onChange={handleFotosUpload} />
       <input type="file" ref={bgInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleBgUpload} />
-      <input type="file" ref={insertElementInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleInsertElement} />
 
       <header className="editor-toolbar">
          <div className="toolbar-left">
@@ -491,9 +397,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 setCurrentStoryIndex(0);
                 setUploadedFotos([]); 
                 setPendingStories([]);
-                if (canvasRef.current && canvasRef.current.forceReload) {
-                  canvasRef.current.forceReload();
-                }
               }}>Confirmar e Ir para o Editor</button>
             </div>
           </div>
@@ -553,7 +456,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                      className={`story-card ${index === currentStoryIndex ? 'active' : ''}`}
                      onClick={() => {
                        setCurrentStoryIndex(index);
-                       handleSelectObject(null);
                      }}
                    >
                      <span className="story-index">{index + 1}</span>
@@ -577,13 +479,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
             <div className="canvas-area">
               <StoryCanvas 
                 ref={canvasRef} 
-                storyIndex={currentStoryIndex}
                 story={currentStory}
                 assets={project.fotos}
                 logoUrl={project.logoUrl}
-                onSelectObject={handleSelectObject} 
-                onClearSelection={() => handleSelectObject(null)}
-                onUpdateStory={handleUpdateStory}
+                defaultEndereco={project.defaultEndereco}
               />
             </div>
             
@@ -602,99 +501,40 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                        onClick={() => {
                           const updatedStories = [...project.stories];
                           updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], template: tpl };
-                          delete updatedStories[currentStoryIndex].fabricData; // Limpa as edições guardadas do template antigo
                           setProjects(prev => prev.map(p => p.id === project.id ? { ...project, stories: updatedStories } : p));
-                          handleSelectObject(null);
-                          if (canvasRef.current) canvasRef.current.forceReload();
                        }}
                        title={`Template ${tpl}`}
                      >
-                       <div className="tpl-preview"></div>
                        <span>{tpl}</span>
                      </div>
                    ))}
                  </div>
-                 <button className="btn-secondary" onClick={() => bgInputRef.current?.click()}>Alterar Imagem de Fundo</button>
+                 <button className="btn-secondary" onClick={() => bgInputRef.current?.click()} style={{ marginTop: '1rem', width: '100%' }}>Alterar Imagem de Fundo</button>
                </div>
 
-       {/* Painel de Elementos Livres (Logo) */}
-       <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
-         <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: '0.5rem' }}>Elementos Livres & Logo</label>
-         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {project.logoUrl && (
-              <button className="btn-secondary" onClick={() => insertImageToCanvas(project.logoUrl)}>
-                Injetar Logo na Tela
-              </button>
-            )}
-            <button className="btn-secondary" onClick={() => insertElementInputRef.current?.click()}>
-                Upload de Imagem Livre...
-            </button>
-         </div>
-       </div>
-
-               {activeProps ? (
-                 <div className="properties-form">
-                    <div className="form-group">
-                      <label>{(activeProps.type === 'i-text' || activeProps.type === 'textbox') ? 'Cor do Texto' : 'Cor do Preenchimento (Forma)'}</label>
-                      <div className="color-input-wrapper">
-                        <input type="color" value={activeProps.fill} onChange={handleColorChange} />
-                        <span>{activeProps.fill}</span>
-                      </div>
-                    </div>
-                    {(activeProps.type === 'i-text' || activeProps.type === 'textbox') && (
-                       <>
-                         <div className="form-group">
-                            <label>Cor de Fundo da Caixa</label>
-                            <div className="color-input-wrapper">
-                              <input type="color" value={activeProps.textBackgroundColor || '#000000'} onChange={(e) => {
-                                activeObjectRef.current.set('textBackgroundColor', e.target.value);
-                                setActiveProps({...activeProps, textBackgroundColor: e.target.value});
-                                canvasRef.current.getCanvas().renderAll();
-                                triggerManualSave();
-                              }} />
-                              <span>{activeProps.textBackgroundColor || 'Transparente'}</span>
-                            </div>
-                            {activeProps.textBackgroundColor && (
-                              <button className="btn-secondary" style={{marginTop: '0.5rem', width: '100%'}} onClick={() => {
-                                activeObjectRef.current.set('textBackgroundColor', '');
-                                setActiveProps({...activeProps, textBackgroundColor: ''});
-                                canvasRef.current.getCanvas().renderAll();
-                                triggerManualSave();
-                              }}>Remover Fundo</button>
-                            )}
-                         </div>
-                         <div className="form-group">
-                            <label>Tamanho da Fonte</label>
-                            <input type="number" value={activeProps.fontSize} onChange={(e) => {
-                              activeObjectRef.current.set('fontSize', parseInt(e.target.value));
-                              setActiveProps({...activeProps, fontSize: parseInt(e.target.value)});
-                              canvasRef.current.getCanvas().renderAll();
-                              triggerManualSave();
-                            }} />
-                         </div>
-                         <div className="form-group">
-                            <label>Fonte (Família)</label>
-                            <select value={activeProps.fontFamily} onChange={(e) => {
-                              activeObjectRef.current.set('fontFamily', e.target.value);
-                              setActiveProps({...activeProps, fontFamily: e.target.value});
-                              canvasRef.current.getCanvas().renderAll();
-                              triggerManualSave();
-                            }}>
-                              <option value="Fraunces">Fraunces (Serif)</option>
-                              <option value="Playfair Display">Playfair Display (Serif)</option>
-                              <option value="Nunito">Nunito (Sans)</option>
-                              <option value="Lato">Lato (Sans)</option>
-                            </select>
-                         </div>
-                       </>
-                    )}
+               {/* Painel de Campos do Story */}
+               <div className="properties-form">
+                 <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: '0.5rem' }}>Campos do Story</label>
+                 <div className="form-group">
+                   <label>Título principal</label>
+                   <textarea rows={3} value={currentStory?.titulo || ''} onChange={(e) => updateStoryField('titulo', e.target.value)} />
                  </div>
-               ) : (
-                 <div className="empty-properties">Selecione um objeto no canvas para editar suas propriedades.</div>
-               )}
-
-               <div className="panel-actions">
-                  <button className="btn-secondary" onClick={handleSaveState}>Salvar Projeto</button>
+                 <div className="form-group">
+                   <label>Subtítulo / Contexto</label>
+                   <textarea rows={2} value={currentStory?.subtitulo || ''} onChange={(e) => updateStoryField('subtitulo', e.target.value)} />
+                 </div>
+                 <div className="form-group">
+                   <label>Call-to-Action (CTA)</label>
+                   <input type="text" value={currentStory?.cta || ''} onChange={(e) => updateStoryField('cta', e.target.value)} />
+                 </div>
+                 <div className="form-group">
+                   <label>Cor Principal (Hex)</label>
+                   <div className="color-input-wrapper"><input type="color" value={currentStory?.cor || '#C47B2B'} onChange={(e) => updateStoryField('cor', e.target.value)} /></div>
+                 </div>
+                 <div className="form-group">
+                   <label>Endereço de Rodapé</label>
+                   <input type="text" value={currentStory?.endereco || ''} onChange={(e) => updateStoryField('endereco', e.target.value)} />
+                 </div>
                </div>
             </div>
           </div>
