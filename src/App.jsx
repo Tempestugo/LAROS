@@ -17,7 +17,11 @@ function App() {
 
   // Salvar projetos no localStorage sempre que eles mudarem
   useEffect(() => {
-    localStorage.setItem('laros_projects', JSON.stringify(projects));
+    try {
+      localStorage.setItem('laros_projects', JSON.stringify(projects));
+    } catch (error) {
+      console.warn("Aviso: Limite de armazenamento atingido. O projeto não foi salvo no navegador.", error);
+    }
   }, [projects]);
 
   const activeProject = projects.find(p => p.id === activeProjectId);

@@ -276,8 +276,16 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const handleUpdateStory = (fabricData) => {
     if (project.stories && project.stories[currentStoryIndex]) {
       setSaveStatus('A guardar...');
+      
+      // Otimização agressiva: Remover a imagem de fundo do JSON do FabricData.
+      // Como o Base64 já está salvo no story.fotoUrl, evitamos duplicar a imagem e estourar o LocalStorage.
+      const optimizedData = JSON.parse(JSON.stringify(fabricData));
+      if (optimizedData.backgroundImage) {
+        delete optimizedData.backgroundImage;
+      }
+
       const updatedStories = [...project.stories];
-      updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fabricData };
+      updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fabricData: optimizedData };
       const updatedProject = { ...project, stories: updatedStories };
       setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
       
