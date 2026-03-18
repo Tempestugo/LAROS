@@ -18,6 +18,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState('');
   const [uploadedFotos, setUploadedFotos] = useState([]); // Estado para o Passo 1 da Welcome Zone
+  const [pendingStories, setPendingStories] = useState([]); // Estado para o display intermediário
   
   // Função para testar a renderização do Template A
   const addTestStory = () => {
@@ -54,9 +55,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     const file = e.target.files[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('csv', file);
-
     try {
       // 1. Busca fotos atuais no servidor para garantir o Match
       const fotosRes = await fetch('/api/fotos');
@@ -64,29 +62,43 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       const serverFotos = fotosData.fotos || [];
       const allFotos = [...serverFotos, ...(project.fotos || [])];
 
-      const res = await fetch('/api/upload/csv', { method: 'POST', body: formData });
-      const data = await res.json();
-
-      if (data.content) {
-        Papa.parse(data.content, {
+      // Lê o CSV diretamente no cliente, evita problemas de proxy/HTML de fallback do servidor
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const content = evt.target.result;
+        Papa.parse(content, {
           header: true,
           skipEmptyLines: true,
           delimiter: function(csvString) { return csvString.indexOf(';') > -1 ? ';' : ','; },
           complete: (results) => {
             try {
               const parsedCsvData = results.data;
-              const maxLen = Math.max(uploadedFotos.length, parsedCsvData.length);
+              const isWizard = (!project.stories || project.stories.length === 0) && uploadedFotos.length > 0;
+              const maxLen = isWizard ? Math.max(uploadedFotos.length, parsedCsvData.length) : parsedCsvData.length;
               const novosStories = [];
 
               for (let i = 0; i < maxLen; i++) {
-                const foto = uploadedFotos[i] || { url: null, name: '' };
                 const linhaCsv = parsedCsvData[i] || {};
                 const values = Object.values(linhaCsv);
+                
+                let foundUrl = null;
+                let foundName = '';
+
+                if (isWizard) {
+                   const foto = uploadedFotos[i] || { url: null, name: '' };
+                   foundUrl = foto.url;
+                   foundName = foto.name;
+                }
+                
+                const searchName = foundName || linhaCsv.Nome_Foto || values[4] || '';
+                if (!foundUrl && searchName) {
+                   foundUrl = allFotos.find(f => f.name && f.name.toLowerCase().startsWith(searchName.toLowerCase()))?.url || null;
+                }
 
                 novosStories.push({
                   id: uuidv4(),
-                  fotoUrl: foto.url || allFotos.find(f => f.name && f.name.toLowerCase().startsWith((linhaCsv.Nome_Foto || values[4] || '').toLowerCase()))?.url || null,
-                  foto: foto.name || linhaCsv.Nome_Foto || values[4] || '',
+                  fotoUrl: foundUrl,
+                  foto: searchName,
                   titulo: linhaCsv.Titulo || values[1] || '',
                   subtitulo: linhaCsv.Subtitulo || values[2] || '',
                   cta: linhaCsv.CTA || values[3] || '',
@@ -96,20 +108,15 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 });
               }
 
-              const updatedProject = { ...project, fotos: allFotos, stories: novosStories };
-              setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-              setCurrentStoryIndex(0); // Força sempre o carregamento do primeiro story
-              setUploadedFotos([]); // Limpa as fotos em espera no wizard
-              
-              if (canvasRef.current && canvasRef.current.forceReload) {
-                canvasRef.current.forceReload();
-              }
+              // Dispara a tela de revisão intermediária
+              setPendingStories(novosStories);
             } catch (error) {
               console.error("Erro fatal ao mapear CSV e fotos:", error);
             }
           }
         });
-      }
+      };
+      reader.readAsText(file);
     } catch (err) { console.error("Erro no upload do CSV:", err); }
     e.target.value = ''; // Reseta o input
   };
@@ -343,7 +350,57 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       </header>
 
       <main className="editor-workspace">
-        {(!project.stories || project.stories.length === 0) ? (
+        {pendingStories && pendingStories.length > 0 ? (
+          <div className="welcome-zone" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem', width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Revisão do Mapeamento</h2>
+            <p style={{ color: 'var(--text2)', marginBottom: '1rem' }}>Confirme se as fotos correspondem aos dados do CSV antes de prosseguir para o editor.</p>
+            
+            <div style={{ flex: 1, overflowY: 'auto', backgroundColor: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg3)', zIndex: 1 }}>
+                  <tr>
+                    <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>#</th>
+                    <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '80px' }}>Foto</th>
+                    <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Título</th>
+                    <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Subtítulo</th>
+                    <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Template</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingStories.map((s, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '1rem', color: 'var(--text2)' }}>{idx + 1}</td>
+                      <td style={{ padding: '0.5rem 1rem' }}>
+                        {s.fotoUrl ? (
+                          <img src={s.fotoUrl} alt={s.foto} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                        ) : (
+                          <div style={{ width: '60px', height: '60px', backgroundColor: 'var(--bg4)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text2)', textAlign: 'center' }}>Sem foto</div>
+                        )}
+                      </td>
+                      <td style={{ padding: '1rem', fontWeight: 600 }}>{s.titulo || <span style={{color: 'var(--text3)', fontStyle: 'italic'}}>Vazio</span>}</td>
+                      <td style={{ padding: '1rem', color: 'var(--text2)' }}>{s.subtitulo || <span style={{color: 'var(--text3)', fontStyle: 'italic'}}>Vazio</span>}</td>
+                      <td style={{ padding: '1rem' }}><span style={{ backgroundColor: 'var(--bg3)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{s.template}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+              <button className="btn-secondary" onClick={() => setPendingStories([])}>Cancelar</button>
+              <button className="btn-primary" onClick={() => {
+                const updatedProject = { ...project, stories: pendingStories };
+                setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+                setCurrentStoryIndex(0);
+                setUploadedFotos([]); 
+                setPendingStories([]);
+                if (canvasRef.current && canvasRef.current.forceReload) {
+                  canvasRef.current.forceReload();
+                }
+              }}>Confirmar e Ir para o Editor</button>
+            </div>
+          </div>
+        ) : (!project.stories || project.stories.length === 0) ? (
           <div className="welcome-zone">
             <h2>Comece a criar para {project.name}</h2>
             <p style={{ marginBottom: '2rem', color: 'var(--text2)', textAlign: 'center' }}>
