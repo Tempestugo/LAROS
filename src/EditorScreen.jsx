@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import StoryCanvas from './components/StoryCanvas';
 import Papa from 'papaparse';
 import JSZip from 'jszip';
+import { v4 as uuidv4 } from 'uuid';
 import './EditorScreen.css';
 
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
@@ -16,6 +17,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const [activeProps, setActiveProps] = useState(null); // Estado leve para a UI
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState('');
+  const [uploadedFotos, setUploadedFotos] = useState([]); // Estado para o Passo 1 da Welcome Zone
   
   // Função para testar a renderização do Template A
   const addTestStory = () => {
@@ -133,19 +135,26 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       if (data.fotos && data.fotos.length > 0) {
         const newFotos = [...(project.fotos || []), ...data.fotos];
         
-        // Auto-match em stories que estavam sem foto
-        const updatedStories = project.stories?.map(s => {
-           if (!s.fotoUrl && s.foto) {
-               const m = newFotos.find(f => f.name.toLowerCase().startsWith(s.foto.toLowerCase()));
-               if (m) return { ...s, fotoUrl: m.url };
-           }
-           return s;
-        }) || [];
-        
-        const updatedProject = { ...project, fotos: newFotos, stories: updatedStories };
-        setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-        if (canvasRef.current && canvasRef.current.forceReload) {
-          canvasRef.current.forceReload();
+        if (!project.stories || project.stories.length === 0) {
+          // Passo 1 do Wizard: Guarda temporariamente as fotos para o próximo passo
+          setUploadedFotos(prev => [...prev, ...data.fotos]);
+          const updatedProject = { ...project, fotos: newFotos };
+          setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+        } else {
+          // Auto-match em stories que estavam sem foto (Fluxo normal)
+          const updatedStories = project.stories?.map(s => {
+             if (!s.fotoUrl && s.foto) {
+                 const m = newFotos.find(f => f.name.toLowerCase().startsWith(s.foto.toLowerCase()));
+                 if (m) return { ...s, fotoUrl: m.url };
+             }
+             return s;
+          }) || [];
+          
+          const updatedProject = { ...project, fotos: newFotos, stories: updatedStories };
+          setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+          if (canvasRef.current && canvasRef.current.forceReload) {
+            canvasRef.current.forceReload();
+          }
         }
       }
     } catch (err) { console.error("Erro no upload das Fotos:", err); }
@@ -300,7 +309,15 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
             {saveStatus && <span className="save-status">{saveStatus}</span>}
          </div>
          <div className="toolbar-right">
-            <button className="btn-icon" onClick={() => csvInputRef.current?.click()}>
+            <button 
+              className="btn-icon" 
+              onClick={() => csvInputRef.current?.click()}
+              disabled={(!project.stories || project.stories.length === 0) && uploadedFotos.length === 0}
+              style={{ 
+                opacity: (!project.stories || project.stories.length === 0) && uploadedFotos.length === 0 ? 0.5 : 1,
+                cursor: (!project.stories || project.stories.length === 0) && uploadedFotos.length === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
               Importar CSV
             </button>
@@ -316,20 +333,37 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         {(!project.stories || project.stories.length === 0) ? (
           <div className="welcome-zone">
             <h2>Comece a criar para {project.name}</h2>
+            <p style={{ marginBottom: '2rem', color: 'var(--text2)', textAlign: 'center' }}>
+              As linhas do CSV serão aplicadas pela ordem de seleção das imagens.
+            </p>
             <div className="action-cards">
-              <div className="action-card" onClick={() => csvInputRef.current?.click()}>
-                <div className="icon-wrapper">
-                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--accent)" strokeWidth="1.5" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                </div>
-                <h3>Importar CSV</h3>
-                <p>Gere stories em massa a partir de uma planilha de dados</p>
-              </div>
+              {/* Passo 1 - Obrigatório */}
               <div className="action-card" onClick={() => fotosInputRef.current?.click()}>
                 <div className="icon-wrapper">
                   <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--accent)" strokeWidth="1.5" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
-                <h3>Adicionar Fotos</h3>
-                <p>Faça upload de imagens para a galeria do projeto</p>
+                <h3>1. Adicionar Fotos</h3>
+                <p>Passo obrigatório: Faça upload das imagens da campanha</p>
+                {uploadedFotos.length > 0 && (
+                  <div style={{ color: '#10b981', fontWeight: 'bold', marginTop: '10px' }}>
+                    ✓ {uploadedFotos.length} imagens carregadas
+                  </div>
+                )}
+              </div>
+              {/* Passo 2 - Desbloqueado após Passo 1 */}
+              <div 
+                className={`action-card ${uploadedFotos.length === 0 ? 'disabled' : ''}`} 
+                onClick={() => { if (uploadedFotos.length > 0) csvInputRef.current?.click(); }}
+                style={{ 
+                  opacity: uploadedFotos.length === 0 ? 0.5 : 1, 
+                  cursor: uploadedFotos.length === 0 ? 'not-allowed' : 'pointer' 
+                }}
+              >
+                <div className="icon-wrapper">
+                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--accent)" strokeWidth="1.5" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <h3>2. Importar Textos (CSV)</h3>
+                <p>Gere os stories cruzando as fotos com as linhas da planilha</p>
               </div>
               <div className="action-card" onClick={addTestStory}>
                 <div className="icon-wrapper">
