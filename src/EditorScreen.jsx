@@ -130,6 +130,9 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     
     try {
       const res = await fetch('/api/upload/logo', { method: 'POST', body: formData });
+      if (!res.ok) {
+        throw new Error(`O servidor retornou o status ${res.status}`);
+      }
       const data = await res.json();
       if (data.url) {
         const updatedProject = { ...project, logoUrl: data.url };
@@ -138,7 +141,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           canvasRef.current.forceReload();
         }
       }
-    } catch (err) { console.error("Erro no upload do Logo:", err); }
+    } catch (err) { 
+      console.error("Erro no upload do Logo:", err);
+      alert(`Erro ao fazer upload do logo: ${err.message}. Verifique os logs do servidor.`);
+    }
     e.target.value = '';
   };
 
@@ -151,6 +157,9 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
     try {
       const res = await fetch('/api/upload/fotos', { method: 'POST', body: formData });
+      if (!res.ok) {
+        throw new Error(`O servidor retornou o status ${res.status}`);
+      }
       const data = await res.json();
       if (data.fotos && data.fotos.length > 0) {
         const newFotos = [...(project.fotos || []), ...data.fotos];
@@ -177,7 +186,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           }
         }
       }
-    } catch (err) { console.error("Erro no upload das Fotos:", err); }
+    } catch (err) { 
+      console.error("Erro no upload das Fotos:", err); 
+      alert(`Erro ao fazer upload das fotos: ${err.message}. O backend pode não estar a correr, ou as fotos são muito pesadas.`);
+    }
     e.target.value = '';
   };
 
@@ -190,6 +202,9 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
     try {
       const res = await fetch('/api/upload/fotos', { method: 'POST', body: formData });
+      if (!res.ok) {
+        throw new Error(`O servidor retornou o status ${res.status}`);
+      }
       const data = await res.json();
       if (data.fotos && data.fotos.length > 0) {
         const url = data.fotos[0].url;
@@ -202,7 +217,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         const updatedProject = { ...project, fotos: [...(project.fotos || []), ...data.fotos], stories: updatedStories };
         setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
       }
-    } catch (err) { console.error("Erro no upload do fundo:", err); }
+    } catch (err) { 
+      console.error("Erro no upload do fundo:", err); 
+      alert(`Erro ao alterar o fundo: ${err.message}. Verifique os logs do servidor.`);
+    }
     e.target.value = '';
   };
 
