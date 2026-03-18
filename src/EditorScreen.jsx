@@ -56,10 +56,16 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     if (!file) return;
 
     try {
-      // 1. Busca fotos atuais no servidor para garantir o Match
-      const fotosRes = await fetch('/api/fotos');
-      const fotosData = await fotosRes.json();
-      const serverFotos = fotosData.fotos || [];
+      // 1. Busca fotos atuais no servidor (Tolerante a falhas se o backend estiver em baixo)
+      let serverFotos = [];
+      try {
+        const fotosRes = await fetch('/api/fotos');
+        if (fotosRes.ok) {
+          const fotosData = await fotosRes.json();
+          serverFotos = fotosData.fotos || [];
+        }
+      } catch (e) { console.warn("Backend de fotos indisponível, usando apenas fotos locais."); }
+      
       const allFotos = [...serverFotos, ...(project.fotos || [])];
 
       // Lê o CSV diretamente no cliente, evita problemas de proxy/HTML de fallback do servidor
@@ -125,25 +131,20 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     const file = e.target.files[0];
     if (!file) return;
     
-    const formData = new FormData();
-    formData.append('logo', file);
-    
     try {
-      const res = await fetch('/api/upload/logo', { method: 'POST', body: formData });
-      if (!res.ok) {
-        throw new Error(`O servidor retornou o status ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.url) {
-        const updatedProject = { ...project, logoUrl: data.url };
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const url = evt.target.result;
+        const updatedProject = { ...project, logoUrl: url };
         setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
         if (canvasRef.current && canvasRef.current.forceReload) {
           canvasRef.current.forceReload();
         }
-      }
+      };
+      reader.readAsDataURL(file);
     } catch (err) { 
       console.error("Erro no upload do Logo:", err);
-      alert(`Erro ao fazer upload do logo: ${err.message}. Verifique os logs do servidor.`);
+      alert(`Erro ao carregar o logo localmente.`);
     }
     e.target.value = '';
   };
@@ -187,8 +188,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         }
       }
     } catch (err) { 
-      console.error("Erro no upload das Fotos:", err); 
-      alert(`Erro ao fazer upload das fotos: ${err.message}. O backend pode não estar a correr, ou as fotos são muito pesadas.`);
+      console.error("Erro no processamento das Fotos:", err); 
+      alert(`Erro ao processar as fotos no navegador.`);
     }
     e.target.value = '';
   };
