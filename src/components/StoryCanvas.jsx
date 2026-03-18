@@ -108,10 +108,10 @@ const TEMPLATE_RENDERERS = {
     canvas.add(line);
 
     const pathStr = 'M 8 0 H 828 A 52 52 0 0 1 880 52 V 88 A 52 52 0 0 1 828 140 H 8 A 8 8 0 0 1 0 132 V 8 A 8 8 0 0 1 8 0 Z';
-    const subBg = new fabric.Path(pathStr, { fill: 'rgba(255,248,235,0.92)' });
-    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Lato', fontSize: 50, fontWeight: 700, fill: '#2a1408', left: 40, top: 40 }, 800, 30);
-    const subGroup = new fabric.Group([subBg, subText], { left: 72, top: 1920 - 310 });
-    canvas.add(subGroup);
+    const subBg = new fabric.Path(pathStr, { fill: 'rgba(255,248,235,0.92)', left: 72, top: 1920 - 310 });
+    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Lato', fontSize: 50, fontWeight: 700, fill: '#2a1408', left: 72 + 40, top: 1920 - 310 + 40 }, 800, 30);
+    
+    canvas.add(subBg, subText);
 
     await loadLogoAsync(canvas, logoUrl, 72, 1920 - 90 - 95);
   },
@@ -125,13 +125,13 @@ const TEMPLATE_RENDERERS = {
     });
     canvas.add(overlay);
 
-    const subBg = new fabric.Rect({ width: 600, height: 100, fill: data.cor || '#C47B2B', rx: 50, ry: 50, originX: 'center', originY: 'center' });
-    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Nunito', fontSize: 48, fontWeight: 700, fill: '#FFFFFF', originX: 'center', originY: 'center' }, 550, 24);
-    const subGroup = new fabric.Group([subBg, subText], { left: 372, top: 1920 - 95 - 50, shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 18, offsetY: 4 }) });
-    canvas.add(subGroup);
+    const subBg = new fabric.Rect({ width: 600, height: 100, fill: data.cor || '#C47B2B', rx: 50, ry: 50, originX: 'center', originY: 'center', left: 540, top: 1920 - 95 - 50, shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 18, offsetY: 4 }) });
+    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Nunito', fontSize: 48, fontWeight: 700, fill: '#FFFFFF', originX: 'center', originY: 'center', left: 540, top: 1920 - 95 - 50 }, 550, 24);
+    
+    canvas.add(subBg, subText);
 
     const title = createSmartText(data.titulo || 'Título', {
-      left: 72, top: subGroup.top - 200, fontFamily: 'Fraunces', fontSize: 108, fontStyle: 'italic', fontWeight: 900,
+      left: 72, top: subBg.top - 200, fontFamily: 'Fraunces', fontSize: 108, fontStyle: 'italic', fontWeight: 900,
       fill: '#FFF8EE', shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.7)', blur: 32, offsetY: 4 })
     }, 940, 50);
     canvas.add(title);
@@ -147,10 +147,10 @@ const TEMPLATE_RENDERERS = {
     titleText.set({ left: 540, top: 180, shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.35)', blur: 18, offsetY: 4 }) });
     canvas.add(titleText);
 
-    const subBg = new fabric.Rect({ width: 940, height: 90, fill: darkenColor(data.cor || '#C47B2B'), rx: 18, ry: 18, originX: 'center', originY: 'center' });
-    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Nunito', fontSize: 38, fontWeight: 700, fill: '#FFFFFF', originX: 'center', originY: 'center' }, 900, 20);
-    const subGroup = new fabric.Group([subBg, subText], { left: 540, top: titleText.top + 160 });
-    canvas.add(subGroup);
+    const subBg = new fabric.Rect({ width: 940, height: 90, fill: darkenColor(data.cor || '#C47B2B'), rx: 18, ry: 18, originX: 'center', originY: 'center', left: 540, top: titleText.top + 160 });
+    const subText = createSmartText(data.subtitulo || 'Subtítulo', { fontFamily: 'Nunito', fontSize: 38, fontWeight: 700, fill: '#FFFFFF', originX: 'center', originY: 'center', left: 540, top: titleText.top + 160 }, 900, 20);
+    
+    canvas.add(subBg, subText);
   },
   E: async (canvas, data, logoUrl) => {
     const overlay = new fabric.Rect({ left: 0, top: 0, width: 1080, height: 1920, fill: 'rgba(240,200,150,0.72)', selectable: false, evented: false });
@@ -159,10 +159,10 @@ const TEMPLATE_RENDERERS = {
     const ctxText = createSmartText(data.subtitulo || 'Contexto', { fontFamily: 'Nunito', fontSize: 44, fontWeight: 700, fill: data.cor || '#C47B2B', textBackgroundColor: '#FFF8EE', padding: 16, originX: 'center', originY: 'center', left: 540, top: 960 - 250 }, 900, 24);
     canvas.add(ctxText);
 
-    const titleBg = new fabric.Rect({ width: 920, height: 300, fill: data.cor || '#C47B2B', rx: 48, ry: 48, originX: 'center', originY: 'center' });
-    const titleText = createSmartText(data.titulo || 'Pergunta?', { fontFamily: 'Fraunces', fontSize: 74, fontWeight: 900, fill: '#FFFFFF', originX: 'center', originY: 'center', textAlign: 'center' }, 850, 40);
-    const titleGroup = new fabric.Group([titleBg, titleText], { left: 540, top: 960 - 80 });
-    canvas.add(titleGroup);
+    const titleBg = new fabric.Rect({ width: 920, height: 300, fill: data.cor || '#C47B2B', rx: 48, ry: 48, originX: 'center', originY: 'center', left: 540, top: 960 - 80 });
+    const titleText = createSmartText(data.titulo || 'Pergunta?', { fontFamily: 'Fraunces', fontSize: 74, fontWeight: 900, fill: '#FFFFFF', originX: 'center', originY: 'center', textAlign: 'center', left: 540, top: 960 - 80 }, 850, 40);
+    
+    canvas.add(titleBg, titleText);
 
     await loadLogoAsync(canvas, logoUrl, 540, 1920 - 110 - 155, 'center');
   }

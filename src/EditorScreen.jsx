@@ -82,7 +82,13 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       return;
     }
     activeObjectRef.current = obj;
-    setActiveProps({ type: obj.type, fill: obj.fill || '#ffffff', fontSize: obj.fontSize || 30, fontFamily: obj.fontFamily || 'Fraunces' });
+    setActiveProps({ 
+      type: obj.type, 
+      fill: obj.fill || '#ffffff', 
+      textBackgroundColor: obj.textBackgroundColor || '', // Lê a cor de fundo do texto
+      fontSize: obj.fontSize || 30, 
+      fontFamily: obj.fontFamily || 'Fraunces' 
+    });
   };
 
   // --- Handlers de Upload Integrados à API ---
@@ -381,10 +387,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   };
 
   const handleSaveState = () => {
-    if (!canvasRef.current) return;
-    const json = canvasRef.current.getCanvas().toJSON();
-    localStorage.setItem('laros_canvas_save', JSON.stringify(json));
-    alert("Estado salvo no LocalStorage!");
+    triggerManualSave();
+    alert("Projeto salvo na memória do navegador!");
   };
 
   const currentStory = project.stories?.[currentStoryIndex];
@@ -625,7 +629,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                {activeProps ? (
                  <div className="properties-form">
                     <div className="form-group">
-                      <label>Cor do Preenchimento</label>
+                      <label>{(activeProps.type === 'i-text' || activeProps.type === 'textbox') ? 'Cor do Texto' : 'Cor do Preenchimento (Forma)'}</label>
                       <div className="color-input-wrapper">
                         <input type="color" value={activeProps.fill} onChange={handleColorChange} />
                         <span>{activeProps.fill}</span>
@@ -633,6 +637,26 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                     </div>
                     {(activeProps.type === 'i-text' || activeProps.type === 'textbox') && (
                        <>
+                         <div className="form-group">
+                            <label>Cor de Fundo da Caixa</label>
+                            <div className="color-input-wrapper">
+                              <input type="color" value={activeProps.textBackgroundColor || '#000000'} onChange={(e) => {
+                                activeObjectRef.current.set('textBackgroundColor', e.target.value);
+                                setActiveProps({...activeProps, textBackgroundColor: e.target.value});
+                                canvasRef.current.getCanvas().renderAll();
+                                triggerManualSave();
+                              }} />
+                              <span>{activeProps.textBackgroundColor || 'Transparente'}</span>
+                            </div>
+                            {activeProps.textBackgroundColor && (
+                              <button className="btn-secondary" style={{marginTop: '0.5rem', width: '100%'}} onClick={() => {
+                                activeObjectRef.current.set('textBackgroundColor', '');
+                                setActiveProps({...activeProps, textBackgroundColor: ''});
+                                canvasRef.current.getCanvas().renderAll();
+                                triggerManualSave();
+                              }}>Remover Fundo</button>
+                            )}
+                         </div>
                          <div className="form-group">
                             <label>Tamanho da Fonte</label>
                             <input type="number" value={activeProps.fontSize} onChange={(e) => {
