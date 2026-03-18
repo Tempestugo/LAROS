@@ -5,6 +5,41 @@ import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 import './EditorScreen.css';
 
+// Função auxiliar para redimensionar e comprimir imagens no frontend
+const compressImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        const MAX_WIDTH = 1080;
+        const MAX_HEIGHT = 1920;
+        
+        if (width > height && width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        } else if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        resolve({ name: file.name, url: canvas.toDataURL('image/jpeg', 0.6) });
+      };
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const canvasRef = useRef(null);
   
@@ -132,16 +167,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     if (!file) return;
     
     try {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const url = evt.target.result;
-        const updatedProject = { ...project, logoUrl: url };
-        setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-        if (canvasRef.current && canvasRef.current.forceReload) {
-          canvasRef.current.forceReload();
-        }
-      };
-      reader.readAsDataURL(file);
+      const compressed = await compressImage(file);
+      const updatedProject = { ...project, logoUrl: compressed.url };
+      setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+      if (canvasRef.current && canvasRef.current.forceReload) {
+        canvasRef.current.forceReload();
+      }
     } catch (err) { 
       console.error("Erro no upload do Logo:", err);
       alert(`Erro ao carregar o logo localmente.`);
@@ -154,14 +185,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     if (!files.length) return;
     
     try {
-      // Converte todas as fotos para Base64 no frontend sem tocar no servidor
-      const filePromises = Array.from(files).map(file => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (evt) => resolve({ name: file.name, url: evt.target.result });
-          reader.readAsDataURL(file);
-        });
-      });
+      // Redimensiona e comprime todas as fotos para Base64 no frontend
+      const filePromises = Array.from(files).map(file => compressImage(file));
 
       const novasFotosData = await Promise.all(filePromises);
 
@@ -202,19 +227,13 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     if (!file) return;
     
     try {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const url = evt.target.result;
-        
-        if (canvasRef.current) canvasRef.current.setBackground(url);
-
-        // Guarda no estado a imagem específica e adiciona-a à galeria geral
-        const updatedStories = [...project.stories];
-        updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fotoUrl: url };
-        const updatedProject = { ...project, fotos: [...(project.fotos || []), { name: file.name, url }], stories: updatedStories };
-        setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-      };
-      reader.readAsDataURL(file);
+      const compressed = await compressImage(file);
+      if (canvasRef.current) canvasRef.current.setBackground(compressed.url);
+      
+      const updatedStories = [...project.stories];
+      updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fotoUrl: compressed.url };
+      const updatedProject = { ...project, fotos: [...(project.fotos || []), compressed], stories: updatedStories };
+      setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
     } catch (err) { 
       console.error("Erro no upload do fundo:", err); 
       alert(`Erro ao alterar a imagem de fundo no navegador.`);
