@@ -48,6 +48,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const logoInputRef = useRef(null);
   const fotosInputRef = useRef(null);
   const bgInputRef = useRef(null);
+  const insertElementInputRef = useRef(null);
   const activeObjectRef = useRef(null); // Ref segura para o Canvas não travar
   const [activeProps, setActiveProps] = useState(null); // Estado leve para a UI
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
@@ -241,6 +242,48 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     e.target.value = '';
   };
 
+  const insertImageToCanvas = async (url) => {
+    const canvas = canvasRef.current?.getCanvas();
+    if (!canvas) return;
+    
+    try {
+      let fabricObj = window.fabric;
+      if (!fabricObj) {
+        const mod = await import('fabric');
+        fabricObj = mod.fabric || mod.default || mod;
+      }
+      
+      fabricObj.Image.fromURL(url, (img) => {
+        if (img.width > 400) img.scaleToWidth(400);
+        img.set({
+          left: (canvas.width / 2) - (img.getScaledWidth() / 2),
+          top: (canvas.height / 2) - (img.getScaledHeight() / 2),
+          transparentCorners: false
+        });
+        canvas.add(img);
+        canvas.setActiveObject(img);
+        canvas.renderAll();
+        triggerManualSave();
+      }, { crossOrigin: 'anonymous' });
+    } catch (e) {
+      console.error("Erro ao injetar imagem no canvas", e);
+      alert("Não foi possível inserir a imagem diretamente na tela.");
+    }
+  };
+
+  const handleInsertElement = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+       const compressed = await compressImage(file);
+       await insertImageToCanvas(compressed.url);
+    } catch(err) {
+       console.error(err);
+       alert("Erro ao carregar a imagem extra.");
+    }
+    e.target.value = '';
+  };
+
   // --- Ações na Sidebar Esquerda (Duplicar e Apagar) ---
 
   const handleDuplicateStory = (e, index) => {
@@ -361,6 +404,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       <input type="file" ref={logoInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleLogoUpload} />
       <input type="file" ref={fotosInputRef} style={{ display: 'none' }} accept="image/*" multiple onChange={handleFotosUpload} />
       <input type="file" ref={bgInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleBgUpload} />
+      <input type="file" ref={insertElementInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleInsertElement} />
 
       <header className="editor-toolbar">
          <div className="toolbar-left">
@@ -562,6 +606,21 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                  </div>
                  <button className="btn-secondary" onClick={() => bgInputRef.current?.click()}>Alterar Imagem de Fundo</button>
                </div>
+
+       {/* Painel de Elementos Livres (Logo) */}
+       <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+         <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: '0.5rem' }}>Elementos Livres & Logo</label>
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {project.logoUrl && (
+              <button className="btn-secondary" onClick={() => insertImageToCanvas(project.logoUrl)}>
+                Injetar Logo na Tela
+              </button>
+            )}
+            <button className="btn-secondary" onClick={() => insertElementInputRef.current?.click()}>
+                Upload de Imagem Livre...
+            </button>
+         </div>
+       </div>
 
                {activeProps ? (
                  <div className="properties-form">
