@@ -73,20 +73,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           skipEmptyLines: true,
           delimiter: function(csvString) { return csvString.indexOf(';') > -1 ? ';' : ','; },
           complete: (results) => {
-            const parsedStories = results.data.map(row => {
-              const values = Object.values(row);
-              return {
-                titulo: row.Titulo || values[1] || '',
-                subtitulo: row.Subtitulo || values[2] || '',
-                cta: row.CTA || values[3] || '',
-                foto: row.Nome_Foto || values[4] || '',
-                // Faz Match imediato cruzando as fotos do servidor
-                fotoUrl: allFotos.find(f => f.name.toLowerCase().startsWith((row.Nome_Foto || values[4] || '').toLowerCase()))?.url || null,
-                cor: row.Cor || values[5] || project.defaultCor || '#C47B2B',
-                template: row.Template || values[6] || 'A',
-                endereco: row.Endereco || values[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
-              };
-            });
+            try {
+              const parsedCsvData = results.data;
+              const maxLen = Math.max(uploadedFotos.length, parsedCsvData.length);
+              const novosStories = [];
 
               for (let i = 0; i < maxLen; i++) {
                 const foto = uploadedFotos[i] || { url: null, name: '' };
