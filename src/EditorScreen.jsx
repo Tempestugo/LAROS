@@ -153,28 +153,31 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     const files = e.target.files;
     if (!files.length) return;
     
-    const formData = new FormData();
-    Array.from(files).forEach(f => formData.append('fotos', f));
-
     try {
-      const res = await fetch('/api/upload/fotos', { method: 'POST', body: formData });
-      if (!res.ok) {
-        throw new Error(`O servidor retornou o status ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.fotos && data.fotos.length > 0) {
-        const newFotos = [...(project.fotos || []), ...data.fotos];
+      // Converte todas as fotos para Base64 no frontend sem tocar no servidor
+      const filePromises = Array.from(files).map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (evt) => resolve({ name: file.name, url: evt.target.result });
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const novasFotosData = await Promise.all(filePromises);
+
+      if (novasFotosData.length > 0) {
+        const newFotos = [...(project.fotos || []), ...novasFotosData];
         
         if (!project.stories || project.stories.length === 0) {
           // Passo 1 do Wizard: Guarda temporariamente as fotos para o próximo passo
-          setUploadedFotos(prev => [...prev, ...data.fotos]);
+          setUploadedFotos(prev => [...prev, ...novasFotosData]);
           const updatedProject = { ...project, fotos: newFotos };
           setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
         } else {
           // Auto-match em stories que estavam sem foto (Fluxo normal)
           const updatedStories = project.stories?.map(s => {
              if (!s.fotoUrl && s.foto) {
-                 const m = newFotos.find(f => f.name.toLowerCase().startsWith(s.foto.toLowerCase()));
+                 const m = novasFotosData.find(f => f.name.toLowerCase().startsWith(s.foto.toLowerCase()));
                  if (m) return { ...s, fotoUrl: m.url };
              }
              return s;
@@ -198,29 +201,23 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     const file = e.target.files[0];
     if (!file) return;
     
-    const formData = new FormData();
-    formData.append('fotos', file); // Utiliza a rota de array de fotos para coerência
-
     try {
-      const res = await fetch('/api/upload/fotos', { method: 'POST', body: formData });
-      if (!res.ok) {
-        throw new Error(`O servidor retornou o status ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.fotos && data.fotos.length > 0) {
-        const url = data.fotos[0].url;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const url = evt.target.result;
         
         if (canvasRef.current) canvasRef.current.setBackground(url);
 
         // Guarda no estado a imagem específica e adiciona-a à galeria geral
         const updatedStories = [...project.stories];
         updatedStories[currentStoryIndex] = { ...updatedStories[currentStoryIndex], fotoUrl: url };
-        const updatedProject = { ...project, fotos: [...(project.fotos || []), ...data.fotos], stories: updatedStories };
+        const updatedProject = { ...project, fotos: [...(project.fotos || []), { name: file.name, url }], stories: updatedStories };
         setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-      }
+      };
+      reader.readAsDataURL(file);
     } catch (err) { 
       console.error("Erro no upload do fundo:", err); 
-      alert(`Erro ao alterar o fundo: ${err.message}. Verifique os logs do servidor.`);
+      alert(`Erro ao alterar a imagem de fundo no navegador.`);
     }
     e.target.value = '';
   };
