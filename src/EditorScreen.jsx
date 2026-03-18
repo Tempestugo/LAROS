@@ -88,11 +88,34 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
               };
             });
 
-            const updatedProject = { ...project, fotos: allFotos, stories: parsedStories };
-            setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
-            setCurrentStoryIndex(0); // Seleciona automaticamente o primeiro story importado
-            if (canvasRef.current && canvasRef.current.forceReload) {
-              canvasRef.current.forceReload();
+              for (let i = 0; i < maxLen; i++) {
+                const foto = uploadedFotos[i] || { url: null, name: '' };
+                const linhaCsv = parsedCsvData[i] || {};
+                const values = Object.values(linhaCsv);
+
+                novosStories.push({
+                  id: uuidv4(),
+                  fotoUrl: foto.url || allFotos.find(f => f.name && f.name.toLowerCase().startsWith((linhaCsv.Nome_Foto || values[4] || '').toLowerCase()))?.url || null,
+                  foto: foto.name || linhaCsv.Nome_Foto || values[4] || '',
+                  titulo: linhaCsv.Titulo || values[1] || '',
+                  subtitulo: linhaCsv.Subtitulo || values[2] || '',
+                  cta: linhaCsv.CTA || values[3] || '',
+                  cor: linhaCsv.Cor || values[5] || project.defaultCor || '#C47B2B',
+                  template: linhaCsv.Template || values[6] || 'A',
+                  endereco: linhaCsv.Endereco || values[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
+                });
+              }
+
+              const updatedProject = { ...project, fotos: allFotos, stories: novosStories };
+              setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
+              setCurrentStoryIndex(0); // Força sempre o carregamento do primeiro story
+              setUploadedFotos([]); // Limpa as fotos em espera no wizard
+              
+              if (canvasRef.current && canvasRef.current.forceReload) {
+                canvasRef.current.forceReload();
+              }
+            } catch (error) {
+              console.error("Erro fatal ao mapear CSV e fotos:", error);
             }
           }
         });
