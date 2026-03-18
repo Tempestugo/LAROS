@@ -115,19 +115,25 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       reader.onload = (evt) => {
         const content = evt.target.result;
         Papa.parse(content, {
-          header: true,
+          header: false, // Alterado para ler sempre como Arrays por coluna (mais seguro)
           skipEmptyLines: true,
           delimiter: function(csvString) { return csvString.indexOf(';') > -1 ? ';' : ','; },
           complete: (results) => {
             try {
-              const parsedCsvData = results.data;
+              let dataRows = results.data;
+              
+              // Deteta se a primeira linha é cabeçalho e remove-a para não virar um story vazio
+              const firstRowStr = dataRows[0] ? dataRows[0].join('').toLowerCase() : '';
+              if (firstRowStr.includes('titulo') || firstRowStr.includes('foto') || firstRowStr.includes('template')) {
+                dataRows = dataRows.slice(1);
+              }
+
               const isWizard = (!project.stories || project.stories.length === 0) && uploadedFotos.length > 0;
-              const maxLen = isWizard ? Math.max(uploadedFotos.length, parsedCsvData.length) : parsedCsvData.length;
+              const maxLen = isWizard ? Math.max(uploadedFotos.length, dataRows.length) : dataRows.length;
               const novosStories = [];
 
               for (let i = 0; i < maxLen; i++) {
-                const linhaCsv = parsedCsvData[i] || {};
-                const values = Object.values(linhaCsv);
+                const row = dataRows[i] || [];
                 
                 let foundUrl = null;
                 let foundName = '';
@@ -138,7 +144,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                    foundName = foto.name;
                 }
                 
-                const searchName = foundName || linhaCsv.Nome_Foto || values[4] || '';
+                const searchName = foundName || row[4] || '';
                 if (!foundUrl && searchName) {
                    foundUrl = allFotos.find(f => f.name && f.name.toLowerCase().startsWith(searchName.toLowerCase()))?.url || null;
                 }
@@ -147,12 +153,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                   id: uuidv4(),
                   fotoUrl: foundUrl,
                   foto: searchName,
-                  titulo: linhaCsv.Titulo || values[1] || '',
-                  subtitulo: linhaCsv.Subtitulo || values[2] || '',
-                  cta: linhaCsv.CTA || values[3] || '',
-                  cor: linhaCsv.Cor || values[5] || project.defaultCor || '#C47B2B',
-                  template: linhaCsv.Template || values[6] || 'A',
-                  endereco: linhaCsv.Endereco || values[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
+                  titulo: row[1] || '',
+                  subtitulo: row[2] || '',
+                  cta: row[3] || '',
+                  cor: row[5] || project.defaultCor || '#C47B2B',
+                  template: row[6] ? row[6].trim().toUpperCase() : 'A',
+                  endereco: row[7] || project.defaultEndereco || 'R. Ártico, Jardim do Mar, SBC',
                 });
               }
 

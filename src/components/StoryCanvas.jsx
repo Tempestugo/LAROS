@@ -251,7 +251,15 @@ const StoryCanvas = forwardRef(({ storyIndex, story, assets, logoUrl, onSelectOb
 
     if (targetStory.fabricData) {
       return new Promise(resolve => {
-        canvas.loadFromJSON(targetStory.fabricData, () => {
+        canvas.loadFromJSON(targetStory.fabricData, async () => {
+          // Restaura a imagem de fundo que foi otimizada (removida) para poupar memória
+          const matchFoto = () => {
+            if (targetStory.fotoUrl) return targetStory.fotoUrl;
+            if (!targetStory.foto || !targetAssets) return null;
+            const match = targetAssets.find(f => f.name.toLowerCase().startsWith(targetStory.foto.toLowerCase()));
+            return match ? match.url : null;
+          };
+          await setCanvasBackgroundAsync(canvas, matchFoto());
           canvas.renderAll();
           resolve();
         });
