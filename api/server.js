@@ -6,6 +6,10 @@ import { join, extname, parse, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Readable } from 'stream'
 
+import puppeteer from 'puppeteer'
+import JSZip from 'jszip'
+import { renderTemplate } from '../src/templates/index.js'
+
 // csv-parser é CommonJS — importamos com createRequire
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -107,6 +111,48 @@ app.get('/api/logos', (req, res) => {
     .map(f => ({ filename: f, url: `/uploads/logos/${f}` }))
   res.json({ logos })
 })
+
+// ─── Exportação via Puppeteer ─────────────────────────────────────────────────
+app.post('/api/export', async (req, res) => {
+  const { stories, logoUrl, projectName } = req.body;
+  
+  try {
+    const browser = await puppeteer.launch({ 
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1080, height: 1920 });
+
+    const zip = new JSZip();
+
+    for (let i = 0; i < stories.length; i++) {
+      const story = stories[i];
+      const html = renderTemplate(story, logoUrl);
+
+      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      
+      // Duplo rAF para garantir que scripts inline do Template B executam
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+      const screenshot = await page.screenshot({ type: 'png' });
+      const tpl = story.template || 'A';
+      zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+    }
+
+    await browser.close();
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${(projectName || 'stories').replace(/[^a-zA-Z0-9_-]/g, '_')}_export.zip"`,
+    });
+    res.send(zipBuffer);
+  } catch (err) {
+    console.error('Erro na exportação via Puppeteer:', err);
+    res.status(500).json({ error: 'Erro ao gerar imagens no servidor.' });
+  }
+});
 
 // ─── SPA fallback (produção) ──────────────────────────────────────────────────
 app.get('*', (req, res) => {
