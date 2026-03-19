@@ -2,6 +2,14 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const multer  = require('multer');
+const puppeteer = require('puppeteer');
+const JSZip     = require('jszip');
+
+let renderTemplate;
+(async () => {
+  const mod = await import('../src/templates/index.js');
+  renderTemplate = mod.renderTemplate;
+})();
 
 const projectRoot = path.resolve(__dirname, '..');
 const UPLOADS_DIR = path.join(projectRoot, 'public', 'uploads');
@@ -14,6 +22,9 @@ const LOGOS_DIR   = path.join(UPLOADS_DIR, 'logos');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
+
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 const imageFilter = (req, file, cb) => {
   file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Apenas imagens'), false);
@@ -28,6 +39,8 @@ const makeStorage = (dir) => multer.diskStorage({
 const uploadFoto = multer({ storage: makeStorage(FOTOS_DIR), fileFilter: imageFilter, limits: { fileSize: 20*1024*1024 } });
 const uploadLogo = multer({ storage: makeStorage(LOGOS_DIR), fileFilter: imageFilter, limits: { fileSize: 5*1024*1024 } });
 const uploadCsv  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5*1024*1024 } });
+
+app.get('/api/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 app.get('/api/files/:type', (req, res) => {
   const dir = req.params.type === 'fotos' ? FOTOS_DIR : LOGOS_DIR;
@@ -49,6 +62,55 @@ app.post('/api/upload/logo', uploadLogo.single('logo'), (req, res) => {
 app.post('/api/upload/csv', uploadCsv.single('csv'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo' });
   res.json({ content: req.file.buffer.toString('utf8') });
+});
+
+app.post('/api/export', async (req, res) => {
+  const { stories, logoUrl, projectName } = req.body;
+  if (!stories || !Array.isArray(stories)) {
+    return res.status(400).json({ error: 'stories ausentes' });
+  }
+
+  if (!renderTemplate) return res.status(503).json({ error: 'Templates ainda carregando, tente novamente' });
+
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1080, height: 1920 });
+
+    const zip = new JSZip();
+
+    for (let i = 0; i < stories.length; i++) {
+      const story = stories[i];
+      const html = renderTemplate(story, logoUrl);
+
+      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      await page.evaluate(() =>
+        new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+      );
+
+      const screenshot = await page.screenshot({ type: 'png' });
+      const tpl = story.template || 'A';
+      zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+    }
+
+    await browser.close();
+
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${(projectName || 'stories').replace(/[^a-zA-Z0-9_-]/g, '_')}_export.zip"`,
+    });
+    res.send(zipBuffer);
+
+  } catch (err) {
+    if (browser) await browser.close().catch(() => {});
+    console.error('Erro na exportação:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.use('/uploads', express.static(UPLOADS_DIR));
