@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const csv = require('csv-parser');
 const path = require('path');
+const twemojiParser = require('twemoji-parser');
 
 const CSV_FILE     = 'dados.csv';
 const FOLDER_FOTOS = 'fotos';
@@ -22,6 +23,19 @@ function encontrarFoto(nome) {
   if (!fs.existsSync(FOLDER_FOTOS)) return null;
   const f = fs.readdirSync(FOLDER_FOTOS).find(f => f.toLowerCase().startsWith(nome.toLowerCase()));
   return f ? path.resolve(__dirname, FOLDER_FOTOS, f) : null;
+}
+
+function substituirEmojisPorSVG(texto) {
+  if (!texto) return texto;
+  const entities = twemojiParser.parse(texto, { assetType: 'svg' });
+  let resultado = texto;
+  // substitui de trás pra frente para não deslocar índices
+  for (let i = entities.length - 1; i >= 0; i--) {
+    const e = entities[i];
+    const img = `<img src="${e.url}" style="height:1em;width:1em;vertical-align:-0.1em;display:inline-block;" alt="${e.text}">`;
+    resultado = resultado.slice(0, e.indices[0]) + img + resultado.slice(e.indices[1]);
+  }
+  return resultado;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -436,7 +450,10 @@ async function gerarImagens(lista) {
   const logoUrl  = toDataUrl(logoPath, 'image/jpg');
   if (!logoUrl) console.log('⚠️  /assets/logo.jpg não encontrada — stories sem logo.');
 
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--allow-running-insecure-content']
+  });
   const page    = await browser.newPage();
   await page.setViewport({ width: 1080, height: 1920 });
 
@@ -449,16 +466,16 @@ async function gerarImagens(lista) {
     const fotoUrl = toDataUrl(fotoPath, mime);
     const fn      = TEMPLATES[item.template] || templateA;
     const html    = fn({
-      titulo:    item.titulo,
-      subtitulo: item.subtitulo,
-      cta:       item.cta,
+      titulo:    substituirEmojisPorSVG(item.titulo),
+      subtitulo: substituirEmojisPorSVG(item.subtitulo),
+      cta:       substituirEmojisPorSVG(item.cta),
       cor:       item.cor,
       fotoUrl,
       logoUrl,
       endereco:  item.endereco,
     });
 
-    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 
     const outFile = path.join(FOLDER_OUTPUT, `story_${String(i+1).padStart(2,'0')}_T${item.template}.png`);
