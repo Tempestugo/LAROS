@@ -1,17 +1,18 @@
-// Instala fontes de emoji no Linux se não existirem
 const { execSync } = require('child_process');
 try {
   const fonts = execSync('fc-list | grep -i noto').toString();
   console.log('✅ Fontes Noto encontradas:', fonts.slice(0, 200));
 } catch (e) {
-  console.log('❌ Noto Color Emoji NÃO instalada');
+  console.log('❌ Noto Color Emoji NÃO instalada — usando Twemoji SVG');
 }
 
-const express   = require('express');
-const cors      = require('cors');
-const puppeteer = require('puppeteer-core');
-const chromium  = require('@sparticuz/chromium');
-const JSZip     = require('jszip');
+const express        = require('express');
+const cors           = require('cors');
+const puppeteer      = require('puppeteer-core');
+const chromium       = require('@sparticuz/chromium');
+const JSZip          = require('jszip');
+const https          = require('https');
+const twemojiParser  = require('twemoji-parser');
 
 // Import dinâmico dos templates ESM
 let renderTemplate;
@@ -23,14 +24,50 @@ let renderTemplate;
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-// Aceitar requisições do frontend na Hostinger
-app.use(cors({
-  origin: '*'
-}));
+app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 
 app.get('/api/ping', (req, res) => res.json({ ok: true }));
+
+// Cache de SVGs de emoji — baixa uma vez, reutiliza
+const emojiCache = {};
+
+function fetchBuffer(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+async function emojiParaBase64(texto) {
+  if (!texto) return texto;
+  const entities = twemojiParser.parse(texto, { assetType: 'svg' });
+  if (!entities.length) return texto;
+
+  let resultado = texto;
+  for (let i = entities.length - 1; i >= 0; i--) {
+    const e = entities[i];
+    if (!emojiCache[e.url]) {
+      try {
+        const buf = await fetchBuffer(e.url);
+        emojiCache[e.url] = `data:image/svg+xml;base64,${buf.toString('base64')}`;
+      } catch {
+        console.warn(`⚠️ Falha ao baixar emoji: ${e.url}`);
+        emojiCache[e.url] = null;
+      }
+    }
+    if (emojiCache[e.url]) {
+      const img = `<img src="${emojiCache[e.url]}" style="height:1em;width:1em;vertical-align:-0.1em;display:inline-block;" alt="${e.text}">`;
+      resultado = resultado.slice(0, e.indices[0]) + img + resultado.slice(e.indices[1]);
+    }
+  }
+  return resultado;
+}
 
 app.post('/api/export', async (req, res) => {
   const { stories, logoUrl, projectName } = req.body;
@@ -41,30 +78,25 @@ app.post('/api/export', async (req, res) => {
     return res.status(503).json({ error: 'Templates ainda carregando, tente em 2 segundos' });
   }
 
-  console.log(`\n🚀 Iniciando exportação de ${stories.length} stories do projeto: "${projectName || 'sem nome'}"`);
+  console.log(`\n🚀 Iniciando exportação de ${stories.length} stories: "${projectName || 'sem nome'}"`);
 
   try {
-    const zip  = new JSZip();
-
-    // Remove emojis do texto para evitar problema de fonte no servidor
-    function removeEmojis(str) {
-      if (!str) return str;
-      return str.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu, '').trim();
-    }
+    const zip = new JSZip();
 
     for (let i = 0; i < stories.length; i++) {
       const story = stories[i];
       console.log(`⏳ [${i + 1}/${stories.length}] Iniciando: ${story.titulo || 'sem título'}`);
-      
+
+      // Substitui emojis por SVG base64 inline
       const storyClean = {
         ...story,
-        titulo:    removeEmojis(story.titulo),
-        subtitulo: removeEmojis(story.subtitulo),
-        cta:       removeEmojis(story.cta),
+        titulo:    await emojiParaBase64(story.titulo),
+        subtitulo: await emojiParaBase64(story.subtitulo),
+        cta:       await emojiParaBase64(story.cta),
       };
-      const html  = renderTemplate(storyClean, logoUrl);
 
-      // Abre e fecha browser a cada story para liberar memória
+      const html = renderTemplate(storyClean, logoUrl);
+
       const browser = await puppeteer.launch({
         args: [
           ...chromium.args,
@@ -83,7 +115,7 @@ app.post('/api/export', async (req, res) => {
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'domcontentloaded' });
-      
+
       console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
       await page.evaluate(() =>
         new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
@@ -99,8 +131,8 @@ app.post('/api/export', async (req, res) => {
 
     console.log(`📦 Gerando ZIP com ${stories.length} stories...`);
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
-    console.log(`🎉 ZIP gerado com sucesso! Tamanho: ${(zipBuffer.length / 1024 / 1024).toFixed(2)} MB. Enviando para o cliente...`);
-    
+    console.log(`🎉 ZIP gerado! ${(zipBuffer.length / 1024 / 1024).toFixed(2)} MB`);
+
     res.set({
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${(projectName || 'stories').replace(/[^a-zA-Z0-9_-]/g, '_')}_export.zip"`,
