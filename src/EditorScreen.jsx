@@ -121,21 +121,11 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
               for (let i = 0; i < maxLen; i++) {
                 const row = dataRows[i] || [];
-                const searchName = row[4] ? row[4].trim() : '';
                 const csvFotoName = row[4] ? row[4].trim() : '';
                 
-                let foundUrl = null;
-                let foundName = '';
                 let finalUrl = null;
                 let finalName = '';
 
-                if (isWizard) {
-                if (searchName) {
-                   const match = allFotos.find(f => checkFotoMatch(searchName, f.name));
-                   if (match) {
-                     foundUrl = match.url;
-                     foundName = match.name;
-                   }
                 // 1. Tenta cruzar pelo nome da foto (ignora extensões, espaços e maiúsculas)
                 if (csvFotoName) {
                   const match = allFotos.find(f => checkFotoMatch(csvFotoName, f.name));
@@ -145,27 +135,14 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                   }
                 }
                 
-                if (!foundUrl && isWizard) {
-                   const foto = uploadedFotos[i] || { url: null, name: '' };
-                   foundUrl = foto.url;
-                   foundName = foto.name;
-
                 // 2. Se não encontrou pelo nome, E for a primeira importação, usa a ordem das fotos subidas
                 if (!finalUrl && isWizard && uploadedFotos[i]) {
                   finalUrl = uploadedFotos[i].url;
                   finalName = uploadedFotos[i].name;
                 }
-                
-                const searchName = foundName || row[4] || '';
-                if (!foundUrl && searchName) {
-                   foundUrl = allFotos.find(f => checkFotoMatch(searchName, f.name))?.url || null;
-                }
 
                 novosStories.push({
                   id: uuidv4(),
-                  fotoUrl: foundUrl,
-                  foto: searchName,
-                  foto: foundName || searchName,
                   fotoUrl: finalUrl,
                   foto: finalName || csvFotoName,
                   titulo: row[1] ? row[1].trim() : '',
