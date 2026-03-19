@@ -46,7 +46,9 @@ export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
     >
       {story ? (
         <iframe
-          key={el{
+          key={blobUrl}
+          src={blobUrl}
+          style={{
             width:  '1080px',
             height: '1920px',
             border: 'none',
@@ -58,6 +60,7 @@ export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
           }}
           scrolling="no"
         />
+      ) : (
         <div style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>Selecione um story para visualizar</div>
       )}
     </div>
