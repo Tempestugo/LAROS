@@ -408,8 +408,9 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; background:rgba(240,200,150,0.72); }
     .content {
-      position:absolute; inset:0; z-index:2;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      position:absolute; z-index:2;
+      top:320px; left:0; right:0;
+      display:flex; flex-direction:column; align-items:center;
       padding:0 80px; gap:0;
     }
     .pill-ctx {
@@ -441,8 +442,196 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
 </body></html>`;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   TEMPLATE F — Manchete (Capa de revista)
+───────────────────────────────────────────────────────────── */
+function templateF({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) {
+  return `<!DOCTYPE html><html><head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Nunito:wght@700;800&display=swap');
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Playfair Display', 'NotoEmoji', serif; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .overlay {
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 55%);
+    }
+    .topo {
+      position:absolute; top:100px; left:0; right:0; padding:0 72px; z-index:2;
+    }
+    .titulo-gde {
+      font-family:'Playfair Display',serif; font-size:110px; font-weight:900; font-style:italic;
+      color:#FFF8EE; line-height:1.05;
+      text-shadow: 0 4px 40px rgba(0,0,0,0.8), 0 2px 0 rgba(0,0,0,0.4);
+    }
+    .faixa {
+      position:absolute; bottom:0; left:0; right:0; height:420px; z-index:3;
+      background:#FFF8EE;
+      clip-path:polygon(0 40px, 100% 0, 100% 100%, 0 100%);
+      display:flex; flex-direction:column; justify-content:center;
+      padding:80px 72px 80px;
+    }
+    .subtitulo {
+      font-family:'Nunito',sans-serif; font-size:48px; font-weight:700; color:#2a1408;
+      margin-bottom:24px;
+    }
+    .cta-pill {
+      font-family:'Nunito',sans-serif; font-size:44px; font-weight:800;
+      background:${cor}; color:#fff;
+      border-radius:999px; padding:16px 48px; display:inline-block;
+    }
+    .logo-rod {
+      position:absolute; bottom:80px; right:72px;
+      height:80px; object-fit:contain;
+    }
+  </style>
+</head><body>
+  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="overlay"></div>
+  <div class="topo">
+    ${titulo ? `<div class="titulo-gde">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
+  </div>
+  <div class="faixa">
+    ${subtitulo ? `<div class="subtitulo">${subtitulo.replace(/\n/g,'<br>')}</div>` : ''}
+    <div>
+      ${cta ? `<span class="cta-pill">${cta}</span>` : ''}
+    </div>
+    ${logoUrl ? `<img class="logo-rod" src="${logoUrl}" alt="logo">` : ''}
+  </div>
+</body></html>`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TEMPLATE G — Noite (Dark mode total)
+───────────────────────────────────────────────────────────── */
+function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) {
+  return `<!DOCTYPE html><html><head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .overlay {
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+      background: rgba(0,0,0,0.68);
+    }
+    .content {
+      position:absolute; top:50%; transform:translateY(-50%); left:0; right:0; z-index:2;
+      padding:0 80px;
+    }
+    .linha-dec {
+      width:80px; height:4px; background:${cor}; margin-bottom:32px;
+    }
+    .titulo {
+      font-size:96px; font-weight:900; color:#FFF8EE; line-height:1.15; text-align:left;
+      margin-bottom:28px;
+    }
+    .subtitulo {
+      font-family:'Nunito',sans-serif; font-size:48px; font-weight:700;
+      color:rgba(255,248,238,0.75); text-align:left;
+      margin-bottom:48px;
+    }
+    .cta-pill {
+      font-family:'Nunito',sans-serif; font-size:46px; font-weight:800;
+      background:${cor}; color:#fff;
+      border-radius:999px; padding:18px 56px; display:inline-block;
+    }
+    .rodape {
+      position:absolute; bottom:90px; left:0; right:0; z-index:2;
+      padding:0 80px 0 72px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .logo-esq {
+      height:88px; object-fit:contain;
+    }
+    .end-pill {
+      font-family:'Nunito',sans-serif; font-size:34px; font-weight:700;
+      background:rgba(255,248,238,0.15); color:#FFF8EE;
+      border-radius:999px; padding:12px 40px;
+      border:1px solid rgba(255,248,238,0.3);
+    }
+  </style>
+</head><body>
+  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="overlay"></div>
+  <div class="content">
+    <div class="linha-dec"></div>
+    ${titulo ? `<div class="titulo">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
+    ${subtitulo ? `<div class="subtitulo">${subtitulo.replace(/\n/g,'<br>')}</div>` : ''}
+    ${cta ? `<div class="cta-pill">${cta}</div>` : ''}
+  </div>
+  <div class="rodape">
+    ${logoUrl ? `<img class="logo-esq" src="${logoUrl}" alt="logo">` : '<div></div>'}
+    <div class="end-pill">📍 ${endereco}</div>
+  </div>
+</body></html>`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TEMPLATE H — Vitrine (Produto centralizado)
+───────────────────────────────────────────────────────────── */
+function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) {
+  return `<!DOCTYPE html><html><head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; background:${cor}; font-family:'Fraunces',serif; }
+    .bg {
+      position:absolute; left:50%; transform:translateX(-50%);
+      top:280px; width:860px; height:860px; object-fit:cover;
+      border-radius:24px; box-shadow:0 24px 80px rgba(0,0,0,0.5); z-index:1;
+    }
+    .topo {
+      position:absolute; top:100px; left:0; right:0; padding:0 72px; z-index:2;
+    }
+    .titulo {
+      font-size:72px; font-weight:900; color:#FFF8EE; text-align:center; width:100%;
+    }
+    .rodape {
+      position:absolute; bottom:0; left:0; right:0; height:400px; z-index:2;
+      background:rgba(0,0,0,0.25);
+      display:flex; flex-direction:column; align-items:center;
+      padding-top:48px;
+    }
+    .subtitulo {
+      font-family:'Nunito',sans-serif; font-size:46px; font-weight:700; color:#FFF8EE; text-align:center;
+    }
+    .cta-pill {
+      background:#FFF8EE; color:${cor}; font-family:'Fraunces',serif; font-size:64px; font-weight:900;
+      border-radius:999px; padding:24px 72px; margin-top:28px;
+      display:inline-block; text-align:center;
+    }
+    .logo-centro {
+      height:80px; margin-top:24px; object-fit:contain;
+    }
+  </style>
+</head><body>
+  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="topo">
+    ${titulo ? `<div class="titulo">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
+  </div>
+  <div class="rodape">
+    ${subtitulo ? `<div class="subtitulo">${subtitulo.replace(/\n/g,'<br>')}</div>` : ''}
+    ${cta ? `<div class="cta-pill">${cta}</div>` : ''}
+    ${logoUrl ? `<img class="logo-centro" src="${logoUrl}" alt="logo">` : ''}
+  </div>
+</body></html>`;
+}
+
 /* ── MAPA ── */
-const TEMPLATES = { A: templateA, B: templateB, C: templateC, D: templateD, E: templateE };
+const TEMPLATES = { A: templateA, B: templateB, C: templateC, D: templateD, E: templateE, F: templateF, G: templateG, H: templateH };
 
 /* ── CSV ──
    Colunas: 0:Dia | 1:Titulo | 2:Subtitulo | 3:CTA | 4:Foto | 5:Cor | 6:Template | 7:Endereco (opcional)

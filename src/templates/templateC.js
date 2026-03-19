@@ -2,7 +2,11 @@ export function templateC({ titulo, subtitulo, cor, fotoUrl }) {
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,800;0,900;1,900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0) 30%), linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.0) 58%); }

@@ -6,7 +6,11 @@ export function templateD({ titulo, subtitulo, cta, cor, fotoUrl, endereco }) {
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.0) 30%), linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.0) 30%); }
