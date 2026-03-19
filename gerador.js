@@ -3,7 +3,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const path = require('path');
 const twemojiParser = require('twemoji-parser');
-const fetch = require('node-fetch');
+const https = require('https');
 
 const CSV_FILE     = 'dados.csv';
 const FOLDER_FOTOS = 'fotos';
@@ -29,6 +29,17 @@ function encontrarFoto(nome) {
 // Cache para não baixar o mesmo emoji duas vezes
 const emojiCache = {};
 
+function fetchBuffer(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
 async function emojiParaBase64(texto) {
   if (!texto) return texto;
   const entities = twemojiParser.parse(texto, { assetType: 'svg' });
@@ -39,8 +50,7 @@ async function emojiParaBase64(texto) {
     const e = entities[i];
     if (!emojiCache[e.url]) {
       try {
-        const res  = await fetch(e.url);
-        const buf  = await res.buffer();
+        const buf = await fetchBuffer(e.url);
         emojiCache[e.url] = `data:image/svg+xml;base64,${buf.toString('base64')}`;
       } catch {
         emojiCache[e.url] = null;
