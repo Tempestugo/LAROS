@@ -15,9 +15,11 @@ const compressImage = (file) => {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
-        const MAX_WIDTH = 1080;
-        const MAX_HEIGHT = 1920;
         
+        // Aumentado para 4K para garantir qualidade máxima da edição original
+        const MAX_WIDTH = 2160;
+        const MAX_HEIGHT = 3840;
+
         if (width > height && width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
@@ -31,7 +33,8 @@ const compressImage = (file) => {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         
-        resolve({ name: file.name, url: canvas.toDataURL('image/jpeg', 0.6) });
+        // Qualidade aumentada de 0.6 para 0.95
+        resolve({ name: file.name, url: canvas.toDataURL('image/jpeg', 0.95) });
       };
       img.onerror = reject;
       img.src = event.target.result;

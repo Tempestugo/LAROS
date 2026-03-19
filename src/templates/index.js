@@ -4,7 +4,7 @@ export function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
-    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
       background: linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0) 35%), linear-gradient(to top, rgba(0,0,0,0.60) 0%, rgba(0,0,0,0) 35%);
@@ -19,7 +19,7 @@ export function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     .logo-esc { position:absolute; bottom:145px; left:72px; z-index:4; height:108px; width:108px; object-fit:contain; filter:drop-shadow(0 4px 14px rgba(0,0,0,0.55)); }
   </style>
 </head><body>
-  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="bg" style="background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   <div class="overlay"></div>
   <div class="topo">
     ${titulo ? `<div class="pill-1">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
@@ -40,7 +40,7 @@ export function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@700&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Playfair Display',serif; }
-    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(150deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.4) 100%); }
     .top { position:absolute; z-index:2; top:110px; left:72px; right:72px; display:flex; flex-direction:column; gap:8px; }
     .t-wrap { line-height:1; margin-bottom:4px; text-align:left; }
@@ -53,7 +53,7 @@ export function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     .logo-rod { position:absolute; bottom:90px; left:72px; z-index:3; height:95px; object-fit:contain; filter:drop-shadow(0 3px 10px rgba(0,0,0,0.55)); }
   </style>
 </head><body>
-  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="bg" style="background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   <div class="overlay"></div>
   <div class="top">
     <div class="t-wrap" id="tw"><span class="t-hl" id="hl">${palavras}</span></div>
@@ -98,14 +98,14 @@ export function templateC({ titulo, subtitulo, cor, fotoUrl }) {
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,800;0,900;1,900&family=Nunito:wght@700;800&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
-    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0) 30%), linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.0) 58%); }
     .zona { position:absolute; bottom:0; left:0; right:0; z-index:2; padding:0 72px 95px; display:flex; flex-direction:column; align-items:flex-start; gap:22px; }
     .titulo-gde { font-family:'Fraunces',serif; font-size:108px; font-weight:900; font-style:italic; color:#FFF8EE; line-height:1.1; text-shadow: 0 4px 32px rgba(0,0,0,0.70), 0 2px 0 rgba(0,0,0,0.30); }
     .pill-sub { display:inline-block; background:${cor}; color:#fff; font-family:'Nunito',sans-serif; font-size:48px; font-weight:700; padding:16px 48px; border-radius:999px; box-shadow:0 4px 18px rgba(0,0,0,0.4); }
   </style>
 </head><body>
-  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="bg" style="background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   <div class="overlay"></div>
   <div class="zona">
     ${titulo ? `<div class="titulo-gde">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
@@ -124,7 +124,7 @@ export function templateD({ titulo, subtitulo, cta, cor, fotoUrl, endereco }) {
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
-    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background: linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.0) 30%), linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.0) 30%); }
     .top { position:absolute; z-index:2; top:90px; left:0; right:0; padding:0 70px; display:flex; flex-direction:column; align-items:center; gap:22px; }
     .pill-titulo { background:#FFF8EE; color:${cor}; font-family:'Fraunces',serif; font-size:88px; font-weight:900; line-height:1.2; padding:26px 64px; border-radius:999px; text-align:center; display:inline-block; filter:drop-shadow(0 4px 18px rgba(0,0,0,0.35)); }
@@ -135,7 +135,7 @@ export function templateD({ titulo, subtitulo, cta, cor, fotoUrl, endereco }) {
     .pill-end { display:inline-flex; align-items:center; gap:10px; background:#FFF8EE; color:#2a1408; font-family:'Nunito',sans-serif; font-size:34px; font-weight:700; padding:14px 44px; border-radius:999px; }
   </style>
 </head><body>
-  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="bg" style="background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   <div class="overlay"></div>
   <div class="top">
     ${titulo ? `<div class="pill-titulo">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
@@ -154,7 +154,7 @@ export function templateE({ titulo, subtitulo, cor, fotoUrl, logoUrl }) {
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
-    .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
+    .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; background:rgba(240,200,150,0.72); }
     .content { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:280px 80px 0; gap:0; }
     .pill-ctx { display:inline-block; background:#FFF8EE; color:${cor}; font-family:'Nunito',sans-serif; font-size:44px; font-weight:700; padding:16px 56px; border-radius:999px; text-align:center; margin-bottom:30px; }
@@ -163,7 +163,7 @@ export function templateE({ titulo, subtitulo, cor, fotoUrl, logoUrl }) {
     .logo-centro { position:absolute; bottom:110px; left:50%; transform:translateX(-50%); z-index:3; height:155px; object-fit:contain; filter:drop-shadow(0 4px 14px rgba(0,0,0,0.18)); }
   </style>
 </head><body>
-  <img class="bg" src="${fotoUrl}" alt="">
+  <div class="bg" style="background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
   <div class="overlay"></div>
   <div class="content">
     ${subtitulo ? `<div class="pill-ctx">${subtitulo.replace(/\n/g,' ')}</div>` : ''}
