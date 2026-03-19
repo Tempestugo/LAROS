@@ -47,10 +47,23 @@ app.post('/api/export', async (req, res) => {
   try {
     const zip  = new JSZip();
 
+    // Remove emojis do texto para evitar problema de fonte no servidor
+    function removeEmojis(str) {
+      if (!str) return str;
+      return str.replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu, '').trim();
+    }
+
     for (let i = 0; i < stories.length; i++) {
       const story = stories[i];
       console.log(`⏳ [${i + 1}/${stories.length}] Iniciando: ${story.titulo || 'sem título'}`);
-      const html  = renderTemplate(story, logoUrl);
+      
+      const storyClean = {
+        ...story,
+        titulo:    removeEmojis(story.titulo),
+        subtitulo: removeEmojis(story.subtitulo),
+        cta:       removeEmojis(story.cta),
+      };
+      const html  = renderTemplate(storyClean, logoUrl);
 
       // Abre e fecha browser a cada story para liberar memória
       const browser = await puppeteer.launch({
@@ -71,32 +84,6 @@ app.post('/api/export', async (req, res) => {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'domcontentloaded' });
       
-      // Injeta Twemoji para substituir emojis por imagens SVG
-      await page.addScriptTag({ 
-        url: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js' 
-      });
-      // CSS essencial para que os emojis fiquem do tamanho exato do texto
-      await page.addStyleTag({ 
-        content: 'img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }' 
-      });
-      await page.evaluate(() => {
-        twemoji.parse(document.body, {
-          folder: 'svg',
-          ext: '.svg',
-          base: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/assets/'
-        });
-      });
-
-      // Espera todas as imagens de emoji carregarem
-      await page.evaluate(() => {
-        const imgs = [...document.querySelectorAll('img.emoji')];
-        if (!imgs.length) return;
-        return Promise.all(imgs.map(img => {
-          if (img.complete) return Promise.resolve();
-          return new Promise(r => { img.onload = r; img.onerror = r; });
-        }));
-      });
-
       console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
       await page.evaluate(() =>
         new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
