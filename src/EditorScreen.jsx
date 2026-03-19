@@ -286,23 +286,26 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         setSaveStatus(`Exportando ${i + 1}/${project.stories.length}...`);
         
         const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.style.width = '1080px'; tempDiv.style.height = '1920px';
+        // Usar fixed evita que a página faça scroll involuntariamente e garante o render
+        tempDiv.style.position = 'fixed'; tempDiv.style.top = '0'; tempDiv.style.left = '-5000px'; tempDiv.style.width = '1080px'; tempDiv.style.height = '1920px';
         document.body.appendChild(tempDiv);
         
         const iframe = document.createElement('iframe');
         iframe.style.width = '1080px'; iframe.style.height = '1920px'; iframe.style.border = 'none';
         tempDiv.appendChild(iframe);
         
-        // Hook o motor de templating (usa a ref se precisares do html ou processa diretamente)
-        // Truque seguro: Seleciona o story, diz ao Canvas para gerar o doc e pega no html
         const tplObj = canvasRef.current.getHtmlDoc ? canvasRef.current.getHtmlDoc(project.stories[i]) : null;
         
         if (tplObj) {
-           iframe.srcDoc = tplObj; // Precisaria regenerar o tplObj para cada story[i]. Simplificando para a exportação local:
-           await new Promise(r => setTimeout(r, 1000)); // Espera imagens carregarem
-           const canvas = await html2canvas(iframe.contentDocument.body, { width: 1080, height: 1920, scale: 1, useCORS: true });
+           const loadPromise = new Promise(resolve => { iframe.onload = resolve; });
+           iframe.srcdoc = tplObj; // Correção crucial: srcdoc é totalmente em letras minúsculas!
+           await loadPromise; // Aguarda a renderização do DOM no iframe
+           await new Promise(r => setTimeout(r, 1200)); // Aguarda tempo extra para baixar fontes e imagens
+           
+           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+           const canvas = await html2canvas(iframeDoc.body, { width: 1080, height: 1920, scale: 1, useCORS: true, allowTaint: true });
            const base64Data = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, "");
-        zip.file(`story_${String(i+1).padStart(2, '0')}_T${project.stories[i].template || 'A'}.png`, base64Data, { base64: true });
+           zip.file(`story_${String(i+1).padStart(2, '0')}_T${project.stories[i].template || 'A'}.png`, base64Data, { base64: true });
         }
         document.body.removeChild(tempDiv);
       }
