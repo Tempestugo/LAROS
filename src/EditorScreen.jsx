@@ -121,11 +121,21 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
               for (let i = 0; i < maxLen; i++) {
                 const row = dataRows[i] || [];
+                const searchName = row[4] ? row[4].trim() : '';
                 
                 let foundUrl = null;
                 let foundName = '';
 
                 if (isWizard) {
+                if (searchName) {
+                   const match = allFotos.find(f => checkFotoMatch(searchName, f.name));
+                   if (match) {
+                     foundUrl = match.url;
+                     foundName = match.name;
+                   }
+                }
+                
+                if (!foundUrl && isWizard) {
                    const foto = uploadedFotos[i] || { url: null, name: '' };
                    foundUrl = foto.url;
                    foundName = foto.name;
@@ -140,6 +150,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                   id: uuidv4(),
                   fotoUrl: foundUrl,
                   foto: searchName,
+                  foto: foundName || searchName,
                   titulo: row[1] ? row[1].trim() : '',
                   subtitulo: row[2] ? row[2].trim() : '',
                   cta: row[3] ? row[3].trim() : '',
