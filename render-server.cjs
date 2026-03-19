@@ -87,6 +87,16 @@ app.post('/api/export', async (req, res) => {
         });
       });
 
+      // Espera todas as imagens de emoji carregarem
+      await page.evaluate(() => {
+        const imgs = [...document.querySelectorAll('img.emoji')];
+        if (!imgs.length) return;
+        return Promise.all(imgs.map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(r => { img.onload = r; img.onerror = r; });
+        }));
+      });
+
       console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
       await page.evaluate(() =>
         new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
