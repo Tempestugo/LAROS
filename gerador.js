@@ -37,7 +37,11 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
@@ -111,7 +115,11 @@ function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@700&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Playfair Display',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
@@ -222,7 +230,11 @@ function templateC({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,800;0,900;1,900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
@@ -275,7 +287,11 @@ function templateD({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
@@ -343,7 +359,11 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
+    @font-face {
+      font-family: 'NotoEmoji';
+      src: local('Noto Color Emoji');
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
     html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; background:rgba(240,200,150,0.72); }

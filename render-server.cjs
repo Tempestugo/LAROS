@@ -1,11 +1,10 @@
 // Instala fontes de emoji no Linux se não existirem
 const { execSync } = require('child_process');
 try {
-  execSync('fc-list | grep -i noto', { stdio: 'pipe' });
-} catch {
-  try {
-    execSync('apt-get install -y fonts-noto-color-emoji 2>/dev/null || true', { stdio: 'pipe' });
-  } catch {}
+  const fonts = execSync('fc-list | grep -i noto').toString();
+  console.log('✅ Fontes Noto encontradas:', fonts.slice(0, 200));
+} catch (e) {
+  console.log('❌ Noto Color Emoji NÃO instalada');
 }
 
 const express   = require('express');
@@ -75,6 +74,7 @@ app.post('/api/export', async (req, res) => {
           '--disable-gpu',
           '--single-process',
           '--no-zygote',
+          '--font-render-hinting=none',
         ],
         defaultViewport: { width: 1080, height: 1920 },
         executablePath: await chromium.executablePath(),
