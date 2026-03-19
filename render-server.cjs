@@ -71,6 +71,22 @@ app.post('/api/export', async (req, res) => {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'domcontentloaded' });
       
+      // Injeta Twemoji para substituir emojis por imagens SVG
+      await page.addScriptTag({ 
+        url: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js' 
+      });
+      // CSS essencial para que os emojis fiquem do tamanho exato do texto
+      await page.addStyleTag({ 
+        content: 'img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }' 
+      });
+      await page.evaluate(() => {
+        twemoji.parse(document.body, {
+          folder: 'svg',
+          ext: '.svg',
+          base: 'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/assets/'
+        });
+      });
+
       console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
       await page.evaluate(() =>
         new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
