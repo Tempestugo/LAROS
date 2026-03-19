@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import StoryCanvas from './components/StoryCanvas';
 import Papa from 'papaparse';
 import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 import html2canvas from 'html2canvas';
+import StoryCanvas from './components/StoryCanvas';
+import { renderTemplate } from './templates';
 import './EditorScreen.css';
 
 // Função auxiliar para redimensionar e comprimir imagens no frontend
@@ -55,8 +56,6 @@ const checkFotoMatch = (csvName, fileName) => {
 };
 
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
-  const canvasRef = useRef(null);
-  
   const csvInputRef = useRef(null);
   const logoInputRef = useRef(null);
   const fotosInputRef = useRef(null);
@@ -279,7 +278,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   };
 
   const handleBulkExport = async () => {
-    if (!project.stories || project.stories.length === 0 || !canvasRef.current) return;
+    if (!project.stories || project.stories.length === 0) return;
     setSaveStatus('Gerando ZIP (aguarde)...');
 
     try {
@@ -288,29 +287,38 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       for (let i = 0; i < project.stories.length; i++) {
         setSaveStatus(`Exportando ${i + 1}/${project.stories.length}...`);
         
-        const tempDiv = document.createElement('div');
-        // Usar fixed evita que a página faça scroll involuntariamente e garante o render
-        tempDiv.style.position = 'fixed'; tempDiv.style.top = '0'; tempDiv.style.left = '-5000px'; tempDiv.style.width = '1080px'; tempDiv.style.height = '1920px';
-        document.body.appendChild(tempDiv);
+        const story = project.stories[i];
+        const html = renderTemplate(story, project.logoUrl);
         
         const iframe = document.createElement('iframe');
-        iframe.style.width = '1080px'; iframe.style.height = '1920px'; iframe.style.border = 'none';
-        tempDiv.appendChild(iframe);
+        iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1920px;border:none;';
+        iframe.setAttribute('sandbox', 'allow-scripts');
+        document.body.appendChild(iframe);
         
-        const tplObj = canvasRef.current.getHtmlDoc ? canvasRef.current.getHtmlDoc(project.stories[i]) : null;
+        await new Promise(resolve => {
+          iframe.onload = resolve;
+          iframe.srcdoc = html;
+        });
         
-        if (tplObj) {
-           const loadPromise = new Promise(resolve => { iframe.onload = resolve; });
-           iframe.srcdoc = tplObj; // Correção crucial: srcdoc é totalmente em letras minúsculas!
-           await loadPromise; // Aguarda a renderização do DOM no iframe
-           await new Promise(r => setTimeout(r, 1200)); // Aguarda tempo extra para baixar fontes e imagens
-           
-           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-           const canvas = await html2canvas(iframeDoc.body, { width: 1080, height: 1920, scale: 1, useCORS: true, allowTaint: true });
-           const base64Data = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, "");
-           zip.file(`story_${String(i+1).padStart(2, '0')}_T${project.stories[i].template || 'A'}.png`, base64Data, { base64: true });
-        }
-        document.body.removeChild(tempDiv);
+        // Aguarda scripts inline executarem (duplo rAF) e carregar fontes/imagens
+        await new Promise(r => iframe.contentWindow.requestAnimationFrame(() =>
+          iframe.contentWindow.requestAnimationFrame(r)
+        ));
+        await new Promise(r => setTimeout(r, 1200));
+        
+        const canvas = await html2canvas(iframe.contentDocument.body, {
+          width: 1080,
+          height: 1920,
+          scale: 1,
+          useCORS: true,
+          allowTaint: true,
+        });
+        
+        document.body.removeChild(iframe);
+        
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const tpl = story.template || 'A';
+        zip.file(`story_${String(i+1).padStart(2, '0')}_T${tpl}.png`, blob);
       }
 
       setSaveStatus('Compactando...');
@@ -499,9 +507,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
             {/* 2. Área do Canvas */}
             <div className="canvas-area">
               <StoryCanvas 
-                ref={canvasRef} 
                 story={currentStory}
-                assets={project.fotos}
                 logoUrl={project.logoUrl}
                 defaultEndereco={project.defaultEndereco}
               />

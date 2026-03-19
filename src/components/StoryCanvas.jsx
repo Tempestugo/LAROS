@@ -1,58 +1,60 @@
-import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { TEMPLATES } from '../templates';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { renderTemplate } from '../templates';
 
-const StoryCanvas = forwardRef(({ story, assets, logoUrl, defaultEndereco }, ref) => {
-  const wrapperRef = useRef(null);
-  const iframeRef = useRef(null);
+export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
+  const containerRef = useRef(null);
   const [scale, setScale] = useState(0.3);
 
   useEffect(() => {
-    const resizeCanvas = () => {
-      if (!wrapperRef.current) return;
-      const { clientWidth, clientHeight } = wrapperRef.current;
-      const scale = Math.min((clientWidth - 40) / 1080, (clientHeight - 40) / 1920);
-      setScale(scale);
+    const updateScale = () => {
+      if (!containerRef.current) return;
+      const { clientWidth, clientHeight } = containerRef.current;
+      const scaleX = clientWidth / 1080;
+      const scaleY = clientHeight / 1920;
+      setScale(Math.min(scaleX, scaleY) * 0.95); // 0.95 para deixar uma margem segura
     };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
   }, []);
 
-  const getHtmlDoc = (storyToRender = story) => {
-    if (!storyToRender) return '';
-    let fUrl = storyToRender.fotoUrl;
-    if (!fUrl && storyToRender.foto && assets) {
-      const match = assets.find(f => {
-        const cleanCsv = storyToRender.foto.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const cleanFile = f.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        return cleanFile.includes(cleanCsv) || cleanCsv.includes(cleanFile);
-      });
-      if (match) fUrl = match.url;
-    }
-    const tpl = TEMPLATES[storyToRender.template || 'A'] || TEMPLATES['A'];
-    return tpl({
-      titulo: storyToRender.titulo,
-      subtitulo: storyToRender.subtitulo,
-      cta: storyToRender.cta,
-      cor: storyToRender.cor || '#C47B2B',
-      fotoUrl: fUrl || '',
-      logoUrl: storyToRender.hideLogo ? '' : (logoUrl || ''),
-      endereco: storyToRender.endereco || defaultEndereco || 'Endereço Padrão'
-    });
-  };
+  // Monta o story com o endereço padrão do projeto se o story não tiver
+  const storyWithDefaults = useMemo(() => ({
+    ...story,
+    endereco: story?.endereco || defaultEndereco || '',
+  }), [story, defaultEndereco]);
 
-  useImperativeHandle(ref, () => ({
-    getHtmlDoc,
-    getIframe: () => iframeRef.current
-  }));
+  const html = useMemo(() => {
+    if (!story) return '';
+    return renderTemplate(storyWithDefaults, logoUrl);
+  }, [storyWithDefaults, logoUrl]);
 
   return (
-    <div ref={wrapperRef} style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-      <div style={{ width: 1080, height: 1920, transform: `scale(${scale})`, transformOrigin: 'center center', boxShadow: 'var(--shadow-md)', borderRadius: 16, overflow: 'hidden', backgroundColor: '#000' }}>
-        <iframe ref={iframeRef} srcDoc={getHtmlDoc()} style={{ width: '100%', height: '100%', border: 'none' }} title="Preview Story" />
-      </div>
+    <div 
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+    >
+      {story ? (
+        <iframe
+          key={html} // Força remount quando o HTML muda para feedback imediato
+          srcDoc={html}
+          style={{
+            width:  '1080px',
+            height: '1920px',
+            border: 'none',
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center',
+            flexShrink: 0,
+            borderRadius: '4px',
+            boxShadow: '0 8px 48px rgba(0,0,0,0.6)',
+          }}
+          sandbox="allow-scripts"
+          scrolling="no"
+        />
+      ) : (
+        <div style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>Selecione um story para visualizar</div>
+      )}
     </div>
   );
-});
-
-export default StoryCanvas;
+}
