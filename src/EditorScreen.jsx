@@ -1,8 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
-import html2canvas from 'html2canvas';
 import StoryCanvas from './components/StoryCanvas';
 import { renderTemplate } from './templates';
 import './EditorScreen.css';
@@ -279,60 +277,30 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
   const handleBulkExport = async () => {
     if (!project.stories || project.stories.length === 0) return;
-    setSaveStatus('Gerando ZIP (aguarde)...');
+    setSaveStatus('Exportando...');
 
     try {
-      const zip = new JSZip();
-      
-      for (let i = 0; i < project.stories.length; i++) {
-        setSaveStatus(`Exportando ${i + 1}/${project.stories.length}...`);
-        
-        const story = project.stories[i];
-        const html = renderTemplate(story, project.logoUrl);
-        
-        // Usa blob URL em vez de srcdoc — mantém a mesma origem, evita cross-origin block
-        const blob = new Blob([html], { type: 'text/html' });
-        const blobUrl = URL.createObjectURL(blob);
+      const res = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stories: project.stories,
+          logoUrl: project.logoUrl || null,
+          projectName: project.name,
+        }),
+      });
 
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1920px;border:none;visibility:hidden;';
-        document.body.appendChild(iframe);
-        
-        await new Promise(resolve => {
-          iframe.onload = resolve;
-          iframe.src = blobUrl;
-        });
-        
-        // Aguarda scripts inline executarem (duplo rAF) e carregar fontes/imagens
-        await new Promise(r => iframe.contentWindow.requestAnimationFrame(() =>
-          iframe.contentWindow.requestAnimationFrame(r)
-        ));
-        await new Promise(r => setTimeout(r, 1200));
-        
-        const canvas = await html2canvas(iframe.contentDocument.body, {
-          width: 1080,
-          height: 1920,
-          scale: 1,
-          useCORS: true,
-          allowTaint: true,
-        });
-        
-        document.body.removeChild(iframe);
-        URL.revokeObjectURL(blobUrl); // limpa a memória
-        
-        const pngBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-        const tpl = story.template || 'A';
-        zip.file(`story_${String(i+1).padStart(2, '0')}_T${tpl}.png`, pngBlob);
-      }
+      if (!res.ok) throw new Error(`Erro do servidor: ${res.status}`);
 
-      setSaveStatus('Compactando...');
-      const content = await zip.generateAsync({ type: "blob" });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = `${project.name.replace(/\s+/g, '_')}_Stories.zip`;
-      link.click();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.name.replace(/\s+/g, '_')}_stories.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
       
-      setSaveStatus('Exportação concluída!');
+      setSaveStatus('Exportado!');
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (err) { console.error(err); setSaveStatus('Erro na exportação'); }
   };
