@@ -2,7 +2,8 @@ const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
 const multer  = require('multer');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
+const chromium  = require('@sparticuz/chromium');
 const JSZip     = require('jszip');
 
 let renderTemplate;
@@ -75,8 +76,10 @@ app.post('/api/export', async (req, res) => {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920 });
@@ -115,6 +118,10 @@ app.post('/api/export', async (req, res) => {
 
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(projectRoot, 'dist')));
-app.get('*', (req, res) => res.sendFile(path.join(projectRoot, 'dist', 'index.html')));
+app.get('*', (req, res) => {
+  const index = path.join(projectRoot, 'dist', 'index.html');
+  if (!fs.existsSync(index)) return res.status(404).send('Erro: O frontend não foi compilado. A pasta dist/ não foi gerada pelo Vite no servidor.');
+  res.sendFile(index);
+});
 
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 LAROS — porta ${PORT}`));
