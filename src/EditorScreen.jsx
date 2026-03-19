@@ -290,14 +290,17 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         const story = project.stories[i];
         const html = renderTemplate(story, project.logoUrl);
         
+        // Usa blob URL em vez de srcdoc — mantém a mesma origem, evita cross-origin block
+        const blob = new Blob([html], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+
         const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1920px;border:none;';
-        iframe.setAttribute('sandbox', 'allow-scripts');
+        iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;height:1920px;border:none;visibility:hidden;';
         document.body.appendChild(iframe);
         
         await new Promise(resolve => {
           iframe.onload = resolve;
-          iframe.srcdoc = html;
+          iframe.src = blobUrl;
         });
         
         // Aguarda scripts inline executarem (duplo rAF) e carregar fontes/imagens
@@ -315,10 +318,11 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         });
         
         document.body.removeChild(iframe);
+        URL.revokeObjectURL(blobUrl); // limpa a memória
         
-        const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+        const pngBlob = await new Promise(r => canvas.toBlob(r, 'image/png'));
         const tpl = story.template || 'A';
-        zip.file(`story_${String(i+1).padStart(2, '0')}_T${tpl}.png`, blob);
+        zip.file(`story_${String(i+1).padStart(2, '0')}_T${tpl}.png`, pngBlob);
       }
 
       setSaveStatus('Compactando...');

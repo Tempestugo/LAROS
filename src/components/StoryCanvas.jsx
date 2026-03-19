@@ -4,6 +4,7 @@ import { renderTemplate } from '../templates';
 export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(0.3);
+  const [blobUrl, setBlobUrl] = useState('');
 
   useEffect(() => {
     const updateScale = () => {
@@ -30,6 +31,14 @@ export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
     return renderTemplate(storyWithDefaults, logoUrl);
   }, [storyWithDefaults, logoUrl]);
 
+  useEffect(() => {
+    if (!html) return;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    setBlobUrl(url);
+    return () => URL.revokeObjectURL(url); // cleanup ao trocar de story
+  }, [html]);
+
   return (
     <div 
       ref={containerRef}
@@ -37,9 +46,7 @@ export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
     >
       {story ? (
         <iframe
-          key={html} // Força remount quando o HTML muda para feedback imediato
-          srcDoc={html}
-          style={{
+          key={el{
             width:  '1080px',
             height: '1920px',
             border: 'none',
@@ -49,10 +56,8 @@ export default function StoryCanvas({ story, logoUrl, defaultEndereco }) {
             borderRadius: '4px',
             boxShadow: '0 8px 48px rgba(0,0,0,0.6)',
           }}
-          sandbox="allow-scripts"
           scrolling="no"
         />
-      ) : (
         <div style={{ color: 'var(--text3)', fontSize: '0.9rem' }}>Selecione um story para visualizar</div>
       )}
     </div>
