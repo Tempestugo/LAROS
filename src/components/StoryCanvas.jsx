@@ -22,7 +22,11 @@ const StoryCanvas = forwardRef(({ story, assets, logoUrl, defaultEndereco }, ref
     if (!story) return '';
     let fUrl = story.fotoUrl;
     if (!fUrl && story.foto && assets) {
-      const match = assets.find(f => f.name.toLowerCase().startsWith(story.foto.toLowerCase()));
+      const match = assets.find(f => {
+        const cleanCsv = story.foto.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const cleanFile = f.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        return cleanFile.includes(cleanCsv) || cleanCsv.includes(cleanFile);
+      });
       if (match) fUrl = match.url;
     }
     const tpl = TEMPLATES[story.template || 'A'] || TEMPLATES['A'];

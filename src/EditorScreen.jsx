@@ -41,6 +41,16 @@ const compressImage = (file) => {
   });
 };
 
+// Função super flexível para mapeamento de imagens (ignora extensões e caracteres especiais)
+const checkFotoMatch = (csvName, fileName) => {
+  if (!csvName || !fileName) return false;
+  const cleanCsv = csvName.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const cleanFile = fileName.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  
+  if (!cleanCsv || !cleanFile) return false;
+  return cleanFile.includes(cleanCsv) || cleanCsv.includes(cleanFile);
+};
+
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const canvasRef = useRef(null);
   
@@ -123,7 +133,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                 
                 const searchName = foundName || row[4] || '';
                 if (!foundUrl && searchName) {
-                   foundUrl = allFotos.find(f => f.name && f.name.toLowerCase().startsWith(searchName.toLowerCase()))?.url || null;
+                   foundUrl = allFotos.find(f => checkFotoMatch(searchName, f.name))?.url || null;
                 }
 
                 novosStories.push({
@@ -189,7 +199,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           // Auto-match em stories que estavam sem foto (Fluxo normal)
           const updatedStories = project.stories?.map(s => {
              if (!s.fotoUrl && s.foto) {
-                 const m = novasFotosData.find(f => f.name.toLowerCase().startsWith(s.foto.toLowerCase()));
+                 const m = novasFotosData.find(f => checkFotoMatch(s.foto, f.name));
                  if (m) return { ...s, fotoUrl: m.url };
              }
              return s;
@@ -311,7 +321,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     if (story.fotoUrl) return false; // Tem imagem atribuída manualmente
     if (!story.foto) return true;    // Nem sequer tem foto nomeada
     if (!project.fotos || project.fotos.length === 0) return true;
-    return !project.fotos.some(f => f.name.toLowerCase().startsWith(story.foto.toLowerCase()));
+    return !project.fotos.some(f => checkFotoMatch(story.foto, f.name));
   };
 
   return (
