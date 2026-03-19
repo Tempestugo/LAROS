@@ -43,8 +43,8 @@ export function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     .bg { position:absolute; inset:0; width:1080px; height:1920px; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(150deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.4) 100%); }
     .top { position:absolute; z-index:2; top:110px; left:72px; right:72px; display:flex; flex-direction:column; gap:8px; }
-    .t-wrap { line-height:1; margin-bottom:4px; text-align:left; }
-    .t-hl { display:inline; background:${cor}; color:#fff; font-size:96px; font-weight:900; line-height:1.55; padding:2px 32px; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+    .t-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-bottom:4px; text-align:left; width:100%; }
+    .t-hl { display:inline-block; max-width:100%; background:${cor}; color:#fff; font-size:96px; font-weight:900; line-height:1.4; padding:8px 32px; }
     .linha-dec { width:280px; height:5px; background:#fff; border-radius:2px; opacity:0.8; margin:22px 0 0; }
     .sub-wrap { position:absolute; z-index:2; bottom:310px; left:72px; right:72px; }
     .sub-card { display:inline-block; background:rgba(255,248,235,0.92); color:#2a1408; font-family:'Lato',sans-serif; font-size:50px; font-weight:700; line-height:1.4; padding:22px 40px; border-radius:8px 52px 52px 8px; max-width:880px; }
@@ -65,6 +65,7 @@ export function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
   <script>
   (function() {
     const hl = document.getElementById('hl');
+    const tw = document.getElementById('tw');
     const words = ${JSON.stringify(palavras)}.split(' ');
     const MAX = 96, MIN = 60;
     function lineCount(fs) {
@@ -79,14 +80,20 @@ export function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
     for (let i = 1; i <= words.length; i++) {
       hl.innerHTML = words.slice(0, i).join(' ');
       hl.style.fontSize = fs + 'px';
-      if (Math.round(hl.offsetHeight / parseFloat(getComputedStyle(hl).lineHeight)) > 1) { wordsLine1 = i - 1; break; }
+      if (Math.round(hl.offsetHeight / parseFloat(getComputedStyle(hl).lineHeight)) > 1) { 
+        wordsLine1 = Math.max(1, i - 1); 
+        break; 
+      }
     }
-    hl.innerHTML = words.join(' ');
+    let breakAt = wordsLine1;
     const wordsLastLine = words.length - wordsLine1;
     if (wordsLastLine === 1 && wordsLine1 >= 2) {
-      const breakAt = wordsLine1 - 1;
-      hl.innerHTML = words.slice(0, breakAt).join(' ') + '<br>' + words.slice(breakAt).join(' ');
+      breakAt = wordsLine1 - 1;
     }
+    const line1 = words.slice(0, breakAt).join(' ');
+    const line2 = words.slice(breakAt).join(' ');
+    tw.innerHTML = '<span class="t-hl" style="font-size:' + fs + 'px">' + line1 + '</span>' + 
+                   '<span class="t-hl" style="font-size:' + fs + 'px">' + line2 + '</span>';
   })();
   </script>
 </body></html>`;
