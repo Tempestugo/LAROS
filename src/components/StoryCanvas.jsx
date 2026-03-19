@@ -18,26 +18,26 @@ const StoryCanvas = forwardRef(({ story, assets, logoUrl, defaultEndereco }, ref
     return () => window.removeEventListener('resize', resizeCanvas);
   }, []);
 
-  const getHtmlDoc = () => {
-    if (!story) return '';
-    let fUrl = story.fotoUrl;
-    if (!fUrl && story.foto && assets) {
+  const getHtmlDoc = (storyToRender = story) => {
+    if (!storyToRender) return '';
+    let fUrl = storyToRender.fotoUrl;
+    if (!fUrl && storyToRender.foto && assets) {
       const match = assets.find(f => {
-        const cleanCsv = story.foto.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const cleanCsv = storyToRender.foto.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
         const cleanFile = f.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9]/g, "");
         return cleanFile.includes(cleanCsv) || cleanCsv.includes(cleanFile);
       });
       if (match) fUrl = match.url;
     }
-    const tpl = TEMPLATES[story.template || 'A'] || TEMPLATES['A'];
+    const tpl = TEMPLATES[storyToRender.template || 'A'] || TEMPLATES['A'];
     return tpl({
-      titulo: story.titulo,
-      subtitulo: story.subtitulo,
-      cta: story.cta,
-      cor: story.cor || '#C47B2B',
+      titulo: storyToRender.titulo,
+      subtitulo: storyToRender.subtitulo,
+      cta: storyToRender.cta,
+      cor: storyToRender.cor || '#C47B2B',
       fotoUrl: fUrl || '',
-      logoUrl: logoUrl || '',
-      endereco: story.endereco || defaultEndereco || 'Endereço Padrão'
+      logoUrl: storyToRender.hideLogo ? '' : (logoUrl || ''),
+      endereco: storyToRender.endereco || defaultEndereco || 'Endereço Padrão'
     });
   };
 

@@ -122,9 +122,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
               for (let i = 0; i < maxLen; i++) {
                 const row = dataRows[i] || [];
                 const searchName = row[4] ? row[4].trim() : '';
+                const csvFotoName = row[4] ? row[4].trim() : '';
                 
                 let foundUrl = null;
                 let foundName = '';
+                let finalUrl = null;
+                let finalName = '';
 
                 if (isWizard) {
                 if (searchName) {
@@ -133,12 +136,24 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                      foundUrl = match.url;
                      foundName = match.name;
                    }
+                // 1. Tenta cruzar pelo nome da foto (ignora extensões, espaços e maiúsculas)
+                if (csvFotoName) {
+                  const match = allFotos.find(f => checkFotoMatch(csvFotoName, f.name));
+                  if (match) {
+                    finalUrl = match.url;
+                    finalName = match.name;
+                  }
                 }
                 
                 if (!foundUrl && isWizard) {
                    const foto = uploadedFotos[i] || { url: null, name: '' };
                    foundUrl = foto.url;
                    foundName = foto.name;
+
+                // 2. Se não encontrou pelo nome, E for a primeira importação, usa a ordem das fotos subidas
+                if (!finalUrl && isWizard && uploadedFotos[i]) {
+                  finalUrl = uploadedFotos[i].url;
+                  finalName = uploadedFotos[i].name;
                 }
                 
                 const searchName = foundName || row[4] || '';
@@ -151,6 +166,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                   fotoUrl: foundUrl,
                   foto: searchName,
                   foto: foundName || searchName,
+                  fotoUrl: finalUrl,
+                  foto: finalName || csvFotoName,
                   titulo: row[1] ? row[1].trim() : '',
                   subtitulo: row[2] ? row[2].trim() : '',
                   cta: row[3] ? row[3].trim() : '',
@@ -301,7 +318,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         
         // Hook o motor de templating (usa a ref se precisares do html ou processa diretamente)
         // Truque seguro: Seleciona o story, diz ao Canvas para gerar o doc e pega no html
-        const tplObj = canvasRef.current.getHtmlDoc ? canvasRef.current.getHtmlDoc() : null;
+        const tplObj = canvasRef.current.getHtmlDoc ? canvasRef.current.getHtmlDoc(project.stories[i]) : null;
         
         if (tplObj) {
            iframe.srcDoc = tplObj; // Precisaria regenerar o tplObj para cada story[i]. Simplificando para a exportação local:
@@ -555,6 +572,16 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                  <div className="form-group">
                    <label>Endereço de Rodapé</label>
                    <input type="text" value={currentStory?.endereco || ''} onChange={(e) => updateStoryField('endereco', e.target.value)} />
+                 </div>
+                 <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
+                   <input 
+                     type="checkbox" 
+                     id="hideLogo" 
+                     checked={!!currentStory?.hideLogo} 
+                     onChange={(e) => updateStoryField('hideLogo', e.target.checked)} 
+                     style={{ width: 'auto', margin: 0, cursor: 'pointer' }}
+                   />
+                   <label htmlFor="hideLogo" style={{ margin: 0, cursor: 'pointer' }}>Ocultar Logo neste Story</label>
                  </div>
                </div>
             </div>
