@@ -77,12 +77,11 @@ app.post('/api/export', async (req, res) => {
   try {
     browser = await puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1080, height: 1920 },
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
     });
     const page = await browser.newPage();
-    await page.setViewport({ width: 1080, height: 1920 });
 
     const zip = new JSZip();
 
