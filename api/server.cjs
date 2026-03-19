@@ -17,7 +17,11 @@ const UPLOADS_DIR = path.join(projectRoot, 'public', 'uploads');
 const FOTOS_DIR   = path.join(UPLOADS_DIR, 'fotos');
 const LOGOS_DIR   = path.join(UPLOADS_DIR, 'logos');
 
-[UPLOADS_DIR, FOTOS_DIR, LOGOS_DIR].forEach(dir => {
+// Força o uso de uma pasta temporária local (Hostinger costuma ter o /tmp bloqueado para execução)
+const TMP_DIR     = path.join(projectRoot, 'tmp');
+process.env.TMPDIR = TMP_DIR;
+
+[UPLOADS_DIR, FOTOS_DIR, LOGOS_DIR, TMP_DIR].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
