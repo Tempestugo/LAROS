@@ -280,7 +280,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     setSaveStatus('Exportando...');
 
     try {
-      const res = await fetch('/api/export', {
+      const res = await fetch('https://laros.onrender.com/api/export', {
+
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
