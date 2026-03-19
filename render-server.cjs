@@ -1,3 +1,13 @@
+// Instala fontes de emoji no Linux se não existirem
+const { execSync } = require('child_process');
+try {
+  execSync('fc-list | grep -i noto', { stdio: 'pipe' });
+} catch {
+  try {
+    execSync('apt-get install -y fonts-noto-color-emoji 2>/dev/null || true', { stdio: 'pipe' });
+  } catch {}
+}
+
 const express   = require('express');
 const cors      = require('cors');
 const puppeteer = require('puppeteer-core');
@@ -32,11 +42,14 @@ app.post('/api/export', async (req, res) => {
     return res.status(503).json({ error: 'Templates ainda carregando, tente em 2 segundos' });
   }
 
+  console.log(`\n🚀 Iniciando exportação de ${stories.length} stories do projeto: "${projectName || 'sem nome'}"`);
+
   try {
     const zip  = new JSZip();
 
     for (let i = 0; i < stories.length; i++) {
       const story = stories[i];
+      console.log(`⏳ [${i + 1}/${stories.length}] Iniciando: ${story.titulo || 'sem título'}`);
       const html  = renderTemplate(story, logoUrl);
 
       // Abre e fecha browser a cada story para liberar memória
@@ -57,18 +70,24 @@ app.post('/api/export', async (req, res) => {
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      
+      console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
       await page.evaluate(() =>
         new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
       );
 
       const screenshot = await page.screenshot({ type: 'png' });
       await browser.close();
+      console.log(`✅ [${i + 1}/${stories.length}] Concluído: ${story.titulo || 'sem título'}`);
 
       const tpl = story.template || 'A';
       zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
     }
 
+    console.log(`📦 Gerando ZIP com ${stories.length} stories...`);
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    console.log(`🎉 ZIP gerado com sucesso! Tamanho: ${(zipBuffer.length / 1024 / 1024).toFixed(2)} MB. Enviando para o cliente...`);
+    
     res.set({
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="${(projectName || 'stories').replace(/[^a-zA-Z0-9_-]/g, '_')}_export.zip"`,
