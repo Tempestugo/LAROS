@@ -3,6 +3,7 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const path = require('path');
 const twemojiParser = require('twemoji-parser');
+const fetch = require('node-fetch');
 
 const CSV_FILE     = 'dados.csv';
 const FOLDER_FOTOS = 'fotos';
@@ -25,15 +26,30 @@ function encontrarFoto(nome) {
   return f ? path.resolve(__dirname, FOLDER_FOTOS, f) : null;
 }
 
-function substituirEmojisPorSVG(texto) {
+// Cache para não baixar o mesmo emoji duas vezes
+const emojiCache = {};
+
+async function emojiParaBase64(texto) {
   if (!texto) return texto;
   const entities = twemojiParser.parse(texto, { assetType: 'svg' });
+  if (!entities.length) return texto;
+
   let resultado = texto;
-  // substitui de trás pra frente para não deslocar índices
   for (let i = entities.length - 1; i >= 0; i--) {
     const e = entities[i];
-    const img = `<img src="${e.url}" style="height:1em;width:1em;vertical-align:-0.1em;display:inline-block;" alt="${e.text}">`;
-    resultado = resultado.slice(0, e.indices[0]) + img + resultado.slice(e.indices[1]);
+    if (!emojiCache[e.url]) {
+      try {
+        const res  = await fetch(e.url);
+        const buf  = await res.buffer();
+        emojiCache[e.url] = `data:image/svg+xml;base64,${buf.toString('base64')}`;
+      } catch {
+        emojiCache[e.url] = null;
+      }
+    }
+    if (emojiCache[e.url]) {
+      const img = `<img src="${emojiCache[e.url]}" style="height:1em;width:1em;vertical-align:-0.1em;display:inline-block;" alt="${e.text}">`;
+      resultado = resultado.slice(0, e.indices[0]) + img + resultado.slice(e.indices[1]);
+    }
   }
   return resultado;
 }
@@ -466,16 +482,16 @@ async function gerarImagens(lista) {
     const fotoUrl = toDataUrl(fotoPath, mime);
     const fn      = TEMPLATES[item.template] || templateA;
     const html    = fn({
-      titulo:    substituirEmojisPorSVG(item.titulo),
-      subtitulo: substituirEmojisPorSVG(item.subtitulo),
-      cta:       substituirEmojisPorSVG(item.cta),
+      titulo:    await emojiParaBase64(item.titulo),
+      subtitulo: await emojiParaBase64(item.subtitulo),
+      cta:       await emojiParaBase64(item.cta),
       cor:       item.cor,
       fotoUrl,
       logoUrl,
       endereco:  item.endereco,
     });
 
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 
     const outFile = path.join(FOLDER_OUTPUT, `story_${String(i+1).padStart(2,'0')}_T${item.template}.png`);
