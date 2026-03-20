@@ -31,7 +31,7 @@ export function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
   </div>
   ${subtitulo ? `<div class="meio"><div class="pill-2">${subtitulo.replace(/\n/g,'<br>')}</div></div>` : ''}
   <div class="faixa">
-    <span class="faixa-end">&#x1F4CD; ${endereco}</span>
+    <span class="faixa-end">${endereco}</span>
   </div>
   ${logoUrl ? `<img class="logo-esc" src="${logoUrl}" alt="logo">` : ''}
 </body></html>`;

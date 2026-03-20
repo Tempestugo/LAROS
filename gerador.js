@@ -135,7 +135,7 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   </div>
   ${subtitulo ? `<div class="meio"><div class="pill-2">${subtitulo.replace(/\n/g,'<br>')}</div></div>` : ''}
   <div class="faixa">
-    <span class="faixa-end">&#x1F4CD; ${endereco}</span>
+    <span class="faixa-end">${endereco}</span>
   </div>
   ${logoUrl ? `<img class="logo-esc" src="${logoUrl}" alt="logo">` : ''}
 </body></html>`;
@@ -382,7 +382,7 @@ function templateD({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   </div>
   <div class="bottom">
     ${cta ? `<span class="cta-pill">${cta}</span>` : ''}
-    <span class="pill-end">&#x1F4CD; ${endereco}</span>
+    <span class="pill-end">${endereco}</span>
   </div>
 </body></html>`;
 }
@@ -570,7 +570,7 @@ function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   </div>
   <div class="rodape">
     ${logoUrl ? `<img class="logo-esq" src="${logoUrl}" alt="logo">` : '<div></div>'}
-    <div class="end-pill">&#x1F4CD; ${endereco}</div>
+    <div class="end-pill">${endereco}</div>
   </div>
 </body></html>`;
 }

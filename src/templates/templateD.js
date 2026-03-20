@@ -31,7 +31,7 @@ export function templateD({ titulo, subtitulo, cta, cor, fotoUrl, endereco }) {
   </div>
   <div class="bottom">
     ${cta ? `<span class="cta-pill">${cta}</span>` : ''}
-    <span class="pill-end">&#x1F4CD; ${endereco}</span>
+    <span class="pill-end">${endereco}</span>
   </div>
 </body></html>`;
 }
