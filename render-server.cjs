@@ -8,11 +8,11 @@ try {
 
 const express        = require('express');
 const cors           = require('cors');
-const puppeteer      = require('puppeteer-core');
-const chromium       = require('@sparticuz/chromium');
 const JSZip          = require('jszip');
 const https          = require('https');
 const twemojiParser  = require('twemoji-parser');
+// puppeteer e chromium carregados sob demanda — evita OOM na inicialização
+let puppeteer, chromium;
 
 // Import dinâmico dos templates ESM
 let renderTemplate;
@@ -77,6 +77,10 @@ async function emojiParaBase64(texto) {
 }
 
 app.post('/api/export', async (req, res) => {
+  // Carrega puppeteer e chromium só quando necessário
+  if (!puppeteer) puppeteer = require('puppeteer-core');
+  if (!chromium)  chromium  = require('@sparticuz/chromium');
+
   const { stories, logoUrl, projectName } = req.body;
   if (!stories || !Array.isArray(stories)) {
     return res.status(400).json({ error: 'stories ausentes' });
