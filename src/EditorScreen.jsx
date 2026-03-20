@@ -494,7 +494,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
                  <label style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: '0.5rem' }}>Template Visual</label>
                  <div className="template-grid">
-                   {['A', 'B', 'C', 'D', 'E'].map(tpl => (
+                   {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(tpl => (
                      <div 
                        key={tpl}
                        className={`template-card tpl-${tpl} ${currentStory?.template === tpl ? 'active' : ''}`}
