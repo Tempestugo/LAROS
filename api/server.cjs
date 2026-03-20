@@ -25,6 +25,11 @@ process.env.TMPDIR = TMP_DIR;
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
+const DB_FILE = path.join(projectRoot, 'data', 'projects.json');
+if (!fs.existsSync(path.dirname(DB_FILE))) {
+  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+}
+
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
@@ -46,6 +51,36 @@ const uploadLogo = multer({ storage: makeStorage(LOGOS_DIR), fileFilter: imageFi
 const uploadCsv  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5*1024*1024 } });
 
 app.get('/api/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));
+
+// GET /api/projects — carrega todos os projetos
+app.get('/api/projects', (req, res) => {
+  try {
+    if (!fs.existsSync(DB_FILE)) return res.json({ projects: [] });
+    const data = fs.readFileSync(DB_FILE, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (err) {
+    console.error('Erro ao ler projetos:', err);
+    res.status(500).json({ error: 'Erro ao carregar projetos' });
+  }
+});
+
+// POST /api/projects — salva todos os projetos
+app.post('/api/projects', (req, res) => {
+  try {
+    const { projects } = req.body;
+    if (!Array.isArray(projects)) return res.status(400).json({ error: 'projects deve ser um array' });
+
+    const jsonStr = JSON.stringify({ projects }, null, 2);
+    const sizeMB = Buffer.byteLength(jsonStr, 'utf8') / 1024 / 1024;
+    console.log(`Salvando projetos: ${projects.length} projetos, ${sizeMB.toFixed(1)}MB`);
+
+    fs.writeFileSync(DB_FILE, jsonStr, 'utf8');
+    res.json({ ok: true, count: projects.length, sizeMB: sizeMB.toFixed(1) });
+  } catch (err) {
+    console.error('Erro ao salvar projetos:', err);
+    res.status(500).json({ error: 'Erro ao salvar projetos' });
+  }
+});
 
 app.get('/api/files/:type', (req, res) => {
   const dir = req.params.type === 'fotos' ? FOTOS_DIR : LOGOS_DIR;

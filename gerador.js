@@ -434,8 +434,8 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   <img class="bg" src="${fotoUrl}" alt="">
   <div class="overlay"></div>
   <div class="content">
-    ${subtitulo ? `<div class="pill-ctx">${subtitulo.replace(/\n/g,' ')}</div>` : ''}
     ${titulo    ? `<div class="card-titulo">${titulo.replace(/\n/g,'<br>')}</div>` : ''}
+    ${subtitulo ? `<div class="pill-ctx" style="margin-top: 28px;">${subtitulo.replace(/\n/g,' ')}</div>` : ''}
     <div class="linha"></div>
   </div>
   ${logoUrl ? `<img class="logo-centro" src="${logoUrl}" alt="logo">` : ''}
@@ -587,7 +587,23 @@ function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       src: local('Noto Color Emoji');
     }
     * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; background:${cor}; font-family:'Fraunces',serif; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    .bg-blur {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+      z-index: 0;
+      filter: blur(32px) brightness(0.45) saturate(0.8);
+      transform: scale(1.08); /* evita bordas brancas do blur */
+    }
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: ${cor}40; /* cor com 25% opacidade */
+    }
     .bg {
       position:absolute; left:50%; transform:translateX(-50%);
       top:280px; width:860px; height:860px; object-fit:cover;
@@ -618,6 +634,8 @@ function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     }
   </style>
 </head><body>
+  <img class="bg-blur" src="${fotoUrl}" alt="">
+  <div class="bg-overlay"></div>
   <img class="bg" src="${fotoUrl}" alt="">
   <div class="topo">
     ${titulo ? `<div class="titulo">${titulo.replace(/\n/g,'<br>')}</div>` : ''}

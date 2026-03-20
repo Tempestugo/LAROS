@@ -7,7 +7,7 @@
     "dev": "concurrently \"node api/server.cjs\" \"vite\"",
     "build": "vite build",
     "postinstall": "npm run build",
-    "start": "npm run build && node --expose-gc render-server.cjs",
+    "start": "npm run build && node --max-old-space-size=450 --expose-gc render-server.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
