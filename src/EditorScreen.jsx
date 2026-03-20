@@ -289,9 +289,13 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         endereco:     story.endereco,
         hideLogo:     story.hideLogo,
         // Envia o nome do arquivo em vez do base64 inteiro
-        fotoFilename: story.foto || '',
+        fotoFilename: story.fotoUrl?.startsWith('/uploads/') 
+          ? story.fotoUrl.split('/').pop()  // pega só o nome do arquivo da URL
+          : '',
         // Mantém fotoUrl só se não tiver filename (fallback para fotos locais sem upload)
-        fotoUrl:      story.foto ? null : (story.fotoUrl || null),
+        fotoUrl: story.fotoUrl?.startsWith('/uploads/') 
+          ? null  // tem filename, não precisa do base64
+          : (story.fotoUrl || null),  // foto local em base64, envia como estava
       }));
 
       const res = await fetch('https://laros.onrender.com/api/export', {
