@@ -51,6 +51,22 @@ function fetchBuffer(url) {
   });
 }
 
+function fetchImageAsBase64(url) {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? require('https') : require('http');
+    protocol.get(url, (res) => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        const buf = Buffer.concat(chunks);
+        const mime = url.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+        resolve(`data:${mime};base64,${buf.toString('base64')}`);
+      });
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
 async function emojiParaBase64(texto) {
   if (!texto) return texto;
   const entities = twemojiParser.parse(texto, { assetType: 'svg' });
@@ -81,7 +97,7 @@ app.post('/api/export', async (req, res) => {
   if (!puppeteer) puppeteer = require('puppeteer-core');
   if (!chromium)  chromium  = require('@sparticuz/chromium');
 
-  const { stories, logoUrl, projectName } = req.body;
+  const { stories, logoUrl, projectName, logoFilename, hostingerBase } = req.body;
   if (!stories || !Array.isArray(stories)) {
     return res.status(400).json({ error: 'stories ausentes' });
   }
@@ -95,12 +111,25 @@ app.post('/api/export', async (req, res) => {
   const storiesCopy = stories.map(s => ({
     titulo: s.titulo, subtitulo: s.subtitulo, cta: s.cta,
     cor: s.cor, template: s.template, endereco: s.endereco,
-    fotoUrl: s.fotoUrl, hideLogo: s.hideLogo,
+    fotoUrl: s.fotoUrl, hideLogo: s.hideLogo, fotoFilename: s.fotoFilename
   }));
+  
+  const localHostingerBase = hostingerBase || 'https://lightblue-jaguar-801108.hostingersite.com';
+  let resolvedLogoUrl = logoUrl;
+  const localLogoFilename = logoFilename;
+
   // Não guardar referência ao req.body
   req.body = null;
 
   try {
+    // Resolve o logo da mesma forma (fora do loop para não baixar N vezes o mesmo logo)
+    if (!resolvedLogoUrl && localLogoFilename) {
+      try {
+        const url = `${localHostingerBase}/uploads/logos/${localLogoFilename}`;
+        resolvedLogoUrl = await fetchImageAsBase64(url);
+      } catch {}
+    }
+
     const zip = new JSZip();
     const BATCH_SIZE = 5;
 
@@ -109,17 +138,31 @@ app.post('/api/export', async (req, res) => {
       console.log(`⏳ [${i + 1}/${storiesCopy.length}] Iniciando: ${story.titulo || 'sem título'}`);
 
       try {
+        // Resolve a foto — busca do servidor se tiver filename, usa base64 se tiver fotoUrl
+        let currentFotoUrl = story.fotoUrl || null;
+        if (story.fotoFilename && story.fotoFilename.trim()) {
+          try {
+            const url = `${localHostingerBase}/uploads/fotos/${story.fotoFilename}`;
+            currentFotoUrl = await fetchImageAsBase64(url);
+            console.log(`🖼️  Foto carregada: ${story.fotoFilename}`);
+          } catch (err) {
+            console.warn(`⚠️  Falha ao buscar foto ${story.fotoFilename}: ${err.message}`);
+          }
+        }
+
         const storyClean = {
           ...story,
+          fotoUrl:   currentFotoUrl,
           titulo:    await emojiParaBase64(story.titulo),
           subtitulo: await emojiParaBase64(story.subtitulo),
           cta:       await emojiParaBase64(story.cta),
           endereco:  await emojiParaBase64(story.endereco),
         };
   
-        const html = renderTemplate(storyClean, logoUrl);
-        // Limpa o fotoUrl do story após gerar o HTML
+        const html = renderTemplate(storyClean, resolvedLogoUrl);
+        // Limpa a fotoUrl do story após gerar o HTML para limpar a memória o mais cedo possível
         storiesCopy[i].fotoUrl = null;
+        currentFotoUrl = null;
   
         const browser = await puppeteer.launch({
           args: [

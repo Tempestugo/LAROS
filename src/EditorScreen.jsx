@@ -280,14 +280,29 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     setSaveStatus('Exportando...');
 
     try {
-      const res = await fetch('https://laros.onrender.com/api/export', {
+      const storiesParaExport = project.stories.map(story => ({
+        titulo:       story.titulo,
+        subtitulo:    story.subtitulo,
+        cta:          story.cta,
+        cor:          story.cor,
+        template:     story.template,
+        endereco:     story.endereco,
+        hideLogo:     story.hideLogo,
+        // Envia o nome do arquivo em vez do base64 inteiro
+        fotoFilename: story.foto || '',
+        // Mantém fotoUrl só se não tiver filename (fallback para fotos locais sem upload)
+        fotoUrl:      story.foto ? null : (story.fotoUrl || null),
+      }));
 
+      const res = await fetch('https://laros.onrender.com/api/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stories: project.stories,
-          logoUrl: project.logoUrl || null,
+          stories: storiesParaExport,
+          logoFilename: project.logoFilename || null,
+          logoUrl: project.logoFilename ? null : (project.logoUrl || null),
           projectName: project.name,
+          hostingerBase: 'https://lightblue-jaguar-801108.hostingersite.com',
         }),
       });
 
