@@ -60,7 +60,7 @@ export function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, ender
   </div>
   <div class="rodape">
     ${logoUrl ? `<img class="logo-esq" src="${logoUrl}" alt="logo">` : '<div></div>'}
-    <div class="end-pill">📍 ${endereco}</div>
+    <div class="end-pill">&#x1F4CD; ${endereco}</div>
   </div>
 </body></html>`;
 }

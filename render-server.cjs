@@ -87,46 +87,59 @@ app.post('/api/export', async (req, res) => {
       const story = stories[i];
       console.log(`⏳ [${i + 1}/${stories.length}] Iniciando: ${story.titulo || 'sem título'}`);
 
-      // Substitui emojis por SVG base64 inline
-      const storyClean = {
-        ...story,
-        titulo:    await emojiParaBase64(story.titulo),
-        subtitulo: await emojiParaBase64(story.subtitulo),
-        cta:       await emojiParaBase64(story.cta),
-      };
+      try {
+        // Substitui emojis por SVG base64 inline
+        const storyClean = {
+          ...story,
+          titulo:    await emojiParaBase64(story.titulo),
+          subtitulo: await emojiParaBase64(story.subtitulo),
+          cta:       await emojiParaBase64(story.cta),
+          endereco:  await emojiParaBase64(story.endereco),
+        };
+  
+        const html = renderTemplate(storyClean, logoUrl);
+  
+        const browser = await puppeteer.launch({
+          args: [
+            ...chromium.args,
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote',
+            '--font-render-hinting=none',
+            '--memory-pressure-off',
+            '--max_old_space_size=256',
+          ],
+          defaultViewport: { width: 1080, height: 1920 },
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        });
+  
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'domcontentloaded' });
+  
+        console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
+        await page.evaluate(() =>
+          new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+        );
+  
+        const screenshot = await page.screenshot({ type: 'png' });
+        await browser.close();
+        if (global.gc) global.gc(); // força limpeza de memória
+        
+        console.log(`✅ [${i + 1}/${stories.length}] Concluído: ${story.titulo || 'sem título'}`);
+  
+        const tpl = story.template || 'A';
+        zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+      } catch (err) {
+        console.error(`❌ [${i + 1}/${stories.length}] Falhou: ${err.message}`);
+        // Continua para o próximo story em vez de abortar tudo
+      }
 
-      const html = renderTemplate(storyClean, logoUrl);
-
-      const browser = await puppeteer.launch({
-        args: [
-          ...chromium.args,
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--single-process',
-          '--no-zygote',
-          '--font-render-hinting=none',
-        ],
-        defaultViewport: { width: 1080, height: 1920 },
-        executablePath: await chromium.executablePath(),
-        headless: true,
-      });
-
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'domcontentloaded' });
-
-      console.log(`🖼️  [${i + 1}/${stories.length}] Renderizando...`);
-      await page.evaluate(() =>
-        new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
-      );
-
-      const screenshot = await page.screenshot({ type: 'png' });
-      await browser.close();
-      console.log(`✅ [${i + 1}/${stories.length}] Concluído: ${story.titulo || 'sem título'}`);
-
-      const tpl = story.template || 'A';
-      zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+      // Pausa de 500ms entre stories para o GC liberar memória
+      await new Promise(r => setTimeout(r, 500));
     }
 
     console.log(`📦 Gerando ZIP com ${stories.length} stories...`);
