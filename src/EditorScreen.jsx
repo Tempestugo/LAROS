@@ -367,11 +367,11 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           : (storyToExport.fotoUrl || null),  
       };
 
-      const res = await fetch(`${API_BASE_URL}/api/export/single`, {
+      const res = await fetch(`${API_BASE_URL}/api/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          story: storyParaExport,
+          stories: [storyParaExport],
           logoFilename: project.logoFilename || null,
           logoUrl: project.logoFilename ? null : (project.logoUrl || null),
           projectName: project.name,
@@ -385,7 +385,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${project.name.replace(/\s+/g, '_')}_story_${storyIndexToExport + 1}_T${storyToExport.template}.png`;
+      a.download = `${project.name.replace(/\s+/g, '_')}_story_${storyIndexToExport + 1}.zip`;
       a.click();
       URL.revokeObjectURL(url);
       
