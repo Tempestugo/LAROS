@@ -53,6 +53,20 @@ const checkFotoMatch = (csvName, fileName) => {
   return cleanFile.includes(cleanCsv) || cleanCsv.includes(cleanFile);
 };
 
+// Função para garantir formato hexadecimal correto para o input type="color"
+const sanitizeColor = (color) => {
+  if (!color || typeof color !== 'string') return '#c47b2b';
+  const hexMatch = color.trim().match(/^#(?:[0-9a-fA-F]{3}){1,2}$/);
+  if (hexMatch) {
+    // Converte #RGB para #RRGGBB, exigido pelo input color
+    if (color.trim().length === 4) {
+      return '#' + color[1]+color[1]+color[2]+color[2]+color[3]+color[3];
+    }
+    return color.trim();
+  }
+  return '#c47b2b';
+};
+
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const csvInputRef = useRef(null);
   const logoInputRef = useRef(null);
@@ -357,6 +371,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           story: storyParaExport,
           logoFilename: project.logoFilename || null,
           logoUrl: project.logoFilename ? null : (project.logoUrl || null),
+          projectName: project.name,
+          hostingerBase: 'https://lightblue-jaguar-801108.hostingersite.com',
         }),
       });
 
@@ -604,7 +620,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                  </div>
                  <div className="form-group">
                    <label>Cor Principal (Hex)</label>
-                   <div className="color-input-wrapper"><input type="color" value={currentStory?.cor || '#C47B2B'} onChange={(e) => updateStoryField('cor', e.target.value)} /></div>
+                   <div className="color-input-wrapper"><input type="color" value={sanitizeColor(currentStory?.cor)} onChange={(e) => updateStoryField('cor', e.target.value)} /></div>
                  </div>
                  <div className="form-group">
                    <label>Endereço de Rodapé</label>
