@@ -152,6 +152,39 @@ app.post('/api/export', async (req, res) => {
   }
 });
 
+// ─── Exportação de Único Story via Puppeteer ──────────────────────────────────
+app.post('/api/export/single', async (req, res) => {
+  const { story, logoUrl } = req.body;
+  
+  try {
+    const browser = await puppeteer.launch({ 
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1080, height: 1920 });
+
+    const html = renderTemplate(story, logoUrl);
+
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    
+    // Duplo rAF para garantir que scripts inline do Template B executam
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+    const screenshot = await page.screenshot({ type: 'png' });
+    await browser.close();
+
+    res.set({
+      'Content-Type': 'image/png',
+      'Content-Disposition': `attachment; filename="story_T${story.template || 'A'}.png"`,
+    });
+    res.send(screenshot);
+  } catch (err) {
+    console.error('Erro na exportação via Puppeteer (single):', err);
+    res.status(500).json({ error: 'Erro ao gerar imagem no servidor.' });
+  }
+});
+
 // ─── FRONTEND ESTÁTICO (DEPOIS das rotas de API) ──────────
 const DIST = join(ROOT, 'dist')
 if (existsSync(DIST)) {

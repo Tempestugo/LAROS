@@ -325,6 +325,56 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
     } catch (err) { console.error(err); setSaveStatus('Erro na exportação'); }
   };
 
+  const handleSingleExport = async (e, index) => {
+    if (e) e.stopPropagation();
+    const storyIndexToExport = index !== undefined && index !== null ? index : currentStoryIndex;
+    const storyToExport = project.stories[storyIndexToExport];
+    if (!storyToExport) return;
+
+    setSaveStatus(`Exportando #${storyIndexToExport + 1}...`);
+
+    try {
+      const storyParaExport = {
+        titulo:       storyToExport.titulo,
+        subtitulo:    storyToExport.subtitulo,
+        cta:          storyToExport.cta,
+        cor:          storyToExport.cor,
+        template:     storyToExport.template,
+        endereco:     storyToExport.endereco,
+        hideLogo:     storyToExport.hideLogo,
+        fotoFilename: storyToExport.fotoUrl?.startsWith('/uploads/') 
+          ? storyToExport.fotoUrl.split('/').pop()  
+          : '',
+        fotoUrl: storyToExport.fotoUrl?.startsWith('/uploads/') 
+          ? null  
+          : (storyToExport.fotoUrl || null),  
+      };
+
+      const res = await fetch('https://laros.onrender.com/api/export/single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          story: storyParaExport,
+          logoFilename: project.logoFilename || null,
+          logoUrl: project.logoFilename ? null : (project.logoUrl || null),
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Erro do servidor: ${res.status}`);
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.name.replace(/\s+/g, '_')}_story_${storyIndexToExport + 1}_T${storyToExport.template}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      setSaveStatus('Exportado!');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } catch (err) { console.error(err); setSaveStatus('Erro na exportação'); }
+  };
+
   const currentStory = project.stories?.[currentStoryIndex];
 
   // 5. Workflow e Validação Dinâmica
@@ -484,6 +534,9 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
                      {hasMissingImage(story) && <span className="warning-icon" title="Imagem ausente">⚠️</span>}
                      
                      <div className="story-actions">
+                        <button title="Exportar este Story" onClick={(e) => handleSingleExport(e, index)}>
+                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                        </button>
                         <button title="Duplicar" onClick={(e) => handleDuplicateStory(e, index)}>
                           <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
@@ -507,7 +560,10 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
             
             {/* 3. Painel de Propriedades Direita */}
             <div className="sidebar-right">
-               <div className="panel-header">Propriedades</div>
+               <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <span>Propriedades</span>
+                 <button className="btn-primary" onClick={() => handleSingleExport(null, currentStoryIndex)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}>Exportar</button>
+               </div>
                
                {/* Controlos Gerais do Story */}
                <div className="properties-form" style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
