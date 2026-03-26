@@ -67,6 +67,9 @@ const sanitizeColor = (color) => {
   return '#c47b2b';
 };
 
+// Detecta se está rodando no PC ou em Produção para apontar para a API correta
+const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3001' : 'https://laros.onrender.com';
+
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const csvInputRef = useRef(null);
   const logoInputRef = useRef(null);
@@ -312,7 +315,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           : (story.fotoUrl || null),  // foto local em base64, envia como estava
       }));
 
-      const res = await fetch('https://laros.onrender.com/api/export', {
+      const res = await fetch(`${API_BASE_URL}/api/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -364,7 +367,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           : (storyToExport.fotoUrl || null),  
       };
 
-      const res = await fetch('https://laros.onrender.com/api/export/single', {
+      const res = await fetch(`${API_BASE_URL}/api/export/single`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
