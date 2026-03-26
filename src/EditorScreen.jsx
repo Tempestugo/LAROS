@@ -68,7 +68,7 @@ const sanitizeColor = (color) => {
 };
 
 // Detecta se está rodando no PC ou em Produção para apontar para a API correta
-const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3001' : 'https://laros.onrender.com';
+const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const csvInputRef = useRef(null);
