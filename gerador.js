@@ -86,12 +86,13 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -106,7 +107,7 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     }
     .pill-1 {
       display:inline-block; background:#FFF8EE; color:${cor};
-      font-family:'Fraunces',serif; font-size:78px; font-weight:900; line-height:1.2;
+      font-family:'Fraunces', 'Noto Color Emoji', serif; font-size:78px; font-weight:900; line-height:1.2;
       padding:22px 56px; border-radius:999px; max-width:940px;
     }
     .linha-sep { width:100%; height:4px; background:rgba(255,255,255,0.80); margin:26px 0 0; }
@@ -116,7 +117,7 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     }
     .pill-2 {
       display:inline-block; background:${cor}; color:#fff;
-      font-family:'Nunito',sans-serif; font-size:52px; font-weight:700; line-height:1.25;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:52px; font-weight:700; line-height:1.25;
       padding:18px 50px; border-radius:999px; max-width:940px;
     }
     .faixa {
@@ -126,7 +127,7 @@ function templateA({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       display:flex; align-items:flex-end; padding:0 88px 40px 220px;
     }
     .faixa-end {
-      font-family:'Nunito',sans-serif; font-size:36px; font-weight:700;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:36px; font-weight:700;
       color:#FFF8EE; white-space:nowrap;
     }
     .logo-esc {
@@ -164,12 +165,13 @@ function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Playfair Display',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Playfair Display', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -190,13 +192,13 @@ function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     }
     .sub-card {
       display:inline-block; background:rgba(255,248,235,0.92); color:#2a1408;
-      font-family:'Lato',sans-serif; font-size:50px; font-weight:700; line-height:1.4;
+      font-family:'Lato', 'Noto Color Emoji', sans-serif; font-size:50px; font-weight:700; line-height:1.4;
       padding:22px 40px; border-radius:8px 52px 52px 8px; max-width:880px;
     }
     .bottom { position:absolute; z-index:2; bottom:115px; right:72px; }
     .cta-badge {
       display:inline-block; background:#fff; color:#1a1a1a;
-      font-family:'Lato',sans-serif; font-size:44px; font-weight:700;
+      font-family:'Lato', 'Noto Color Emoji', sans-serif; font-size:44px; font-weight:700;
       padding:20px 50px; border-radius:999px;
       filter:drop-shadow(0 6px 18px rgba(0,0,0,0.45));
     }
@@ -279,12 +281,13 @@ function templateC({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,800;0,900;1,900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -298,13 +301,13 @@ function templateC({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       display:flex; flex-direction:column; align-items:flex-start; gap:22px;
     }
     .titulo-gde {
-      font-family:'Fraunces',serif; font-size:108px; font-weight:900; font-style:italic;
+      font-family:'Fraunces', 'Noto Color Emoji', serif; font-size:108px; font-weight:900; font-style:italic;
       color:#FFF8EE; line-height:1.1;
       text-shadow: 0 4px 32px rgba(0,0,0,0.70), 0 2px 0 rgba(0,0,0,0.30);
     }
     .pill-sub {
       display:inline-block; background:${cor}; color:#fff;
-      font-family:'Nunito',sans-serif; font-size:48px; font-weight:700;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:48px; font-weight:700;
       padding:16px 48px; border-radius:999px;
       box-shadow:0 4px 18px rgba(0,0,0,0.4);
     }
@@ -336,12 +339,13 @@ function templateD({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -354,14 +358,14 @@ function templateD({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       display:flex; flex-direction:column; align-items:center; gap:22px;
     }
     .pill-titulo {
-      background:#FFF8EE; color:${cor}; font-family:'Fraunces',serif;
+      background:#FFF8EE; color:${cor}; font-family:'Fraunces', 'Noto Color Emoji', serif;
       font-size:88px; font-weight:900; line-height:1.2;
       padding:26px 64px; border-radius:999px; text-align:center; display:inline-block;
       filter:drop-shadow(0 4px 18px rgba(0,0,0,0.35));
     }
     .banner-sub-wrap { width:100%; display:flex; justify-content:center; }
     .banner-sub {
-      background:${cor2}; color:#fff; font-family:'Nunito',sans-serif;
+      background:${cor2}; color:#fff; font-family:'Nunito', 'Noto Color Emoji', sans-serif;
       font-size:38px; font-weight:700; line-height:1.3;
       padding:16px 52px; border-radius:18px; display:inline-block;
       max-width:940px; text-align:center;
@@ -371,14 +375,14 @@ function templateD({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       display:flex; flex-direction:column; align-items:center; gap:20px;
     }
     .cta-pill {
-      background:#FFF8EE; color:${cor}; font-family:'Fraunces',serif;
+      background:#FFF8EE; color:${cor}; font-family:'Fraunces', 'Noto Color Emoji', serif;
       font-size:80px; font-weight:900; padding:28px 80px; border-radius:999px;
       text-align:center; display:inline-block;
       filter:drop-shadow(0 4px 18px rgba(0,0,0,0.35));
     }
     .pill-end {
       display:inline-flex; align-items:center; gap:10px;
-      background:#FFF8EE; color:#2a1408; font-family:'Nunito',sans-serif;
+      background:#FFF8EE; color:#2a1408; font-family:'Nunito', 'Noto Color Emoji', sans-serif;
       font-size:34px; font-weight:700; padding:14px 44px; border-radius:999px;
     }
   </style>
@@ -408,12 +412,13 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay { position:absolute; inset:0; z-index:1; background:rgba(240,200,150,0.72); }
     .content {
@@ -424,11 +429,11 @@ function templateE({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     }
     .pill-ctx {
       display:inline-block; background:#FFF8EE; color:${cor};
-      font-family:'Nunito',sans-serif; font-size:44px; font-weight:700;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:44px; font-weight:700;
       padding:16px 56px; border-radius:999px; text-align:center; margin-bottom:30px;
     }
     .card-titulo {
-      width:100%; background:${cor}; color:#fff;
+      width:100%; background:${cor}; color:#fff; font-family: 'Fraunces', 'Noto Color Emoji', serif;
       font-size:74px; font-weight:900; line-height:1.25;
       padding:48px 60px; border-radius:48px; text-align:center;
     }
@@ -458,12 +463,13 @@ function templateF({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Playfair Display', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family: 'Playfair Display', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -485,11 +491,11 @@ function templateF({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       padding:80px 72px 80px;
     }
     .subtitulo {
-      font-family:'Nunito',sans-serif; font-size:48px; font-weight:700; color:#2a1408;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:48px; font-weight:700; color:#2a1408;
       margin-bottom:24px;
     }
     .cta-pill {
-      font-family:'Nunito',sans-serif; font-size:44px; font-weight:800;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:44px; font-weight:800;
       background:${cor}; color:#fff;
       border-radius:999px; padding:16px 48px; display:inline-block;
     }
@@ -521,12 +527,13 @@ function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg { position:absolute; inset:0; width:1080px; height:1920px; object-fit:cover; z-index:0; }
     .overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -540,16 +547,16 @@ function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       width:80px; height:4px; background:${cor}; margin-bottom:32px;
     }
     .titulo {
-      font-size:96px; font-weight:900; color:#FFF8EE; line-height:1.15; text-align:left;
+      font-family:'Fraunces', 'Noto Color Emoji', serif; font-size:96px; font-weight:900; color:#FFF8EE; line-height:1.15; text-align:left;
       margin-bottom:28px;
     }
     .subtitulo {
-      font-family:'Nunito',sans-serif; font-size:48px; font-weight:700;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:48px; font-weight:700;
       color:rgba(255,248,238,0.75); text-align:left;
       margin-bottom:48px;
     }
     .cta-pill {
-      font-family:'Nunito',sans-serif; font-size:46px; font-weight:800;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:46px; font-weight:800;
       background:${cor}; color:#fff;
       border-radius:999px; padding:18px 56px; display:inline-block;
     }
@@ -562,7 +569,7 @@ function templateG({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       height:88px; object-fit:contain;
     }
     .end-pill {
-      font-family:'Nunito',sans-serif; font-size:34px; font-weight:700;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:34px; font-weight:700;
       background:rgba(255,248,238,0.15); color:#FFF8EE;
       border-radius:999px; padding:12px 40px;
       border:1px solid rgba(255,248,238,0.3);
@@ -591,12 +598,13 @@ function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
   return `<!DOCTYPE html><html><head>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@800;900&family=Nunito:wght@700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
     @font-face {
       font-family: 'NotoEmoji';
       src: local('Noto Color Emoji');
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Fraunces', 'NotoEmoji', serif; }
-    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces',serif; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:1080px; height:1920px; overflow:hidden; position:relative; font-family:'Fraunces', 'Noto Color Emoji', serif; }
     .bg-blur {
       position: absolute;
       inset: 0;
@@ -622,7 +630,7 @@ function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       position:absolute; top:100px; left:0; right:0; padding:0 72px; z-index:2;
     }
     .titulo {
-      font-size:72px; font-weight:900; color:#FFF8EE; text-align:center; width:100%;
+      font-family:'Fraunces', 'Noto Color Emoji', serif; font-size:72px; font-weight:900; color:#FFF8EE; text-align:center; width:100%;
     }
     .rodape {
       position:absolute; bottom:0; left:0; right:0; height:400px; z-index:2;
@@ -631,10 +639,10 @@ function templateH({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       padding-top:48px;
     }
     .subtitulo {
-      font-family:'Nunito',sans-serif; font-size:46px; font-weight:700; color:#FFF8EE; text-align:center;
+      font-family:'Nunito', 'Noto Color Emoji', sans-serif; font-size:46px; font-weight:700; color:#FFF8EE; text-align:center;
     }
     .cta-pill {
-      background:#FFF8EE; color:${cor}; font-family:'Fraunces',serif; font-size:64px; font-weight:900;
+      background:#FFF8EE; color:${cor}; font-family:'Fraunces', 'Noto Color Emoji', serif; font-size:64px; font-weight:900;
       border-radius:999px; padding:24px 72px; margin-top:28px;
       display:inline-block; text-align:center;
     }
@@ -707,11 +715,11 @@ async function gerarImagens(lista) {
     const mime    = fotoPath.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
     const fotoUrl = toDataUrl(fotoPath, mime);
     const fn      = TEMPLATES[item.template] || templateA;
-    const html    = fn({
-      titulo:    await emojiParaBase64(item.titulo),
-      subtitulo: await emojiParaBase64(item.subtitulo),
-      cta:       await emojiParaBase64(item.cta),
-      endereco:  await emojiParaBase64(item.endereco),
+    const html    = fn({ // A conversão de emoji agora é feita via font-face nos templates
+      titulo:    item.titulo,
+      subtitulo: item.subtitulo,
+      cta:       item.cta,
+      endereco:  item.endereco,
       cor:       item.cor,
       fotoUrl,
       logoUrl,
