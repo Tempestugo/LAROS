@@ -22,8 +22,17 @@ function toDataUrl(filePath, mime = 'image/png') {
 
 function encontrarFoto(nome) {
   if (!fs.existsSync(FOLDER_FOTOS)) return null;
-  const f = fs.readdirSync(FOLDER_FOTOS).find(f => f.toLowerCase().startsWith(nome.toLowerCase()));
-  return f ? path.resolve(__dirname, FOLDER_FOTOS, f) : null;
+  const arquivos = fs.readdirSync(FOLDER_FOTOS).filter(f => f.toLowerCase().match(/\.(png|jpg|jpeg|webp)$/));
+  if (!arquivos.length) return null;
+  
+  if (nome) {
+    const f = arquivos.find(file => file.toLowerCase().startsWith(nome.toLowerCase()));
+    if (f) return path.resolve(__dirname, FOLDER_FOTOS, f);
+  }
+  
+  // Sorteia uma foto caso não encontre pelo nome ou o nome esteja vazio
+  const fSorteada = arquivos[Math.floor(Math.random() * arquivos.length)];
+  return path.resolve(__dirname, FOLDER_FOTOS, fSorteada);
 }
 
 // Cache para não baixar o mesmo emoji duas vezes
@@ -663,7 +672,7 @@ function lerCSV(separator) {
       .on('data', (row) => {
         const v = Object.values(row);
         const foto = v[4] ? v[4].trim() : '';
-        if (!foto || foto === 'Nome_Foto') return;
+        if (foto === 'Nome_Foto') return; // Pula o cabeçalho se houver, mas não barra se a foto estiver vazia
         stories.push({
           titulo:    v[1] ? v[1].trim() : '',
           subtitulo: v[2] ? v[2].trim() : '',
