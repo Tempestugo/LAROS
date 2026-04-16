@@ -151,8 +151,7 @@ app.post('/api/export', async (req, res) => {
       await page.evaluate(async () => { await document.fonts.ready; });
 
       const screenshot = await page.screenshot({ type: 'png' });
-      const tpl = story.template || 'A';
-      zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+      zip.file(`${i + 1}.png`, screenshot);
     }
 
     await page.close(); // Fecha apenas a página/aba. Mantém o navegador vivo!

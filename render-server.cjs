@@ -193,8 +193,7 @@ app.post('/api/export', async (req, res) => {
         const screenshot = await page.screenshot({ type: 'png' });
         await page.close();
         
-        const tpl = story.template || 'A';
-        zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
+        zip.file(`${i + 1}.png`, screenshot);
         console.log(`✅ [${i + 1}/${storiesCopy.length}] Concluído`);
 
       } catch (err) {

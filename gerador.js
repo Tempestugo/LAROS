@@ -734,7 +734,7 @@ async function gerarImagens(lista) {
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     await page.evaluate(async () => { await document.fonts.ready; });
 
-    const outFile = path.join(FOLDER_OUTPUT, `story_${String(i+1).padStart(2,'0')}_T${item.template}.png`);
+    const outFile = path.join(FOLDER_OUTPUT, `${i+1}.png`);
     await page.screenshot({ path: outFile });
     console.log(`📸 [${i+1}/${lista.length}] ${item.foto} → T${item.template} | ${item.cor}`);
   }
