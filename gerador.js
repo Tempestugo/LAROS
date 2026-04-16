@@ -1,8 +1,15 @@
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 const csv = require('csv-parser');
-const path = require('path');
 const twemojiParser = require('twemoji-parser');
 const https = require('https');
 
@@ -182,7 +189,7 @@ function templateB({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
     .t-wrap { line-height:1; margin-bottom:4px; text-align:left; }
     .t-hl {
       display:inline; background:${cor}; color:#fff;
-      font-size:96px; font-weight:900; line-height:1.55; padding:2px 32px;
+      font-family:'Playfair Display', 'Noto Color Emoji', serif; font-size:96px; font-weight:900; line-height:1.55; padding:2px 32px;
       box-decoration-break:clone; -webkit-box-decoration-break:clone;
     }
     .linha-dec { width:280px; height:5px; background:#fff; border-radius:2px; opacity:0.8; margin:22px 0 0; }
@@ -480,7 +487,7 @@ function templateF({ titulo, subtitulo, cta, cor, fotoUrl, logoUrl, endereco }) 
       position:absolute; top:100px; left:0; right:0; padding:0 72px; z-index:2;
     }
     .titulo-gde {
-      font-family:'Playfair Display',serif; font-size:110px; font-weight:900; font-style:italic;
+      font-family:'Playfair Display', 'Noto Color Emoji', serif; font-size:110px; font-weight:900; font-style:italic;
       color:#FFF8EE; line-height:1.05;
       text-shadow: 0 4px 40px rgba(0,0,0,0.8), 0 2px 0 rgba(0,0,0,0.4);
     }

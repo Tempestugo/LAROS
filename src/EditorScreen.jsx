@@ -323,7 +323,6 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
           logoFilename: project.logoFilename || null,
           logoUrl: project.logoFilename ? null : (project.logoUrl || null),
           projectName: project.name,
-          hostingerBase: 'https://lightblue-jaguar-801108.hostingersite.com',
         }),
       });
 

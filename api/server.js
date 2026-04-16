@@ -132,9 +132,10 @@ async function getBrowser() {
 app.post('/api/export', async (req, res) => {
   const { stories, logoUrl, projectName } = req.body;
   
+  let page = null;
   try {
     const browser = await getBrowser(); // Usa a instância única em vez de criar várias
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920 });
 
     const zip = new JSZip();
@@ -154,8 +155,6 @@ app.post('/api/export', async (req, res) => {
       zip.file(`${i + 1}.png`, screenshot);
     }
 
-    await page.close(); // Fecha apenas a página/aba. Mantém o navegador vivo!
-
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     res.set({
       'Content-Type': 'application/zip',
@@ -165,6 +164,8 @@ app.post('/api/export', async (req, res) => {
   } catch (err) {
     console.error('Erro na exportação via Puppeteer:', err);
     res.status(500).json({ error: 'Erro ao gerar imagens no servidor.' });
+  } finally {
+    if (page) await page.close(); // Garante o fechamento da aba mesmo se houver erro
   }
 });
 
@@ -172,9 +173,10 @@ app.post('/api/export', async (req, res) => {
 app.post('/api/export/single', async (req, res) => {
   const { story, logoUrl } = req.body;
   
+  let page = null;
   try {
     const browser = await getBrowser(); // Instância compartilhada
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920 });
 
     const html = renderTemplate(story, logoUrl);
@@ -187,7 +189,6 @@ app.post('/api/export/single', async (req, res) => {
     await page.evaluate(async () => { await document.fonts.ready; });
 
     const screenshot = await page.screenshot({ type: 'png' });
-    await page.close(); // Limpa a memória da aba
 
     res.set({
       'Content-Type': 'image/png',
@@ -197,6 +198,8 @@ app.post('/api/export/single', async (req, res) => {
   } catch (err) {
     console.error('Erro na exportação via Puppeteer (single):', err);
     res.status(500).json({ error: 'Erro ao gerar imagem no servidor.' });
+  } finally {
+    if (page) await page.close(); // Garante o fechamento da aba mesmo se houver erro
   }
 });
 
