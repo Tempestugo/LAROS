@@ -7,4 +7,6 @@
 # Environment variables
 .env
 
+/backup_projeto
+
 # Production build folder
