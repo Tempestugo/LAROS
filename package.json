@@ -2,7 +2,6 @@
   "name": "laros",
   "version": "1.0.0",
   "description": "Editor visual de stories para Instagram",
-  "type": "module",
   "scripts": {
     "dev": "concurrently \"node api/server.cjs\" \"vite\"",
     "build": "vite build",

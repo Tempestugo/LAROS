@@ -92,6 +92,24 @@ async function emojiParaBase64(texto) {
   return resultado;
 }
 
+// ─── Puppeteer Singleton (Otimização de Memória) ──────────────────────────────
+let browserInstance = null;
+async function getBrowser() {
+  if (!puppeteer) puppeteer = require('puppeteer-core');
+  if (!chromium)  chromium  = require('@sparticuz/chromium');
+
+  if (!browserInstance) {
+    browserInstance = await puppeteer.launch({
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      defaultViewport: { width: 1080, height: 1920 },
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+    browserInstance.on('disconnected', () => { browserInstance = null; });
+  }
+  return browserInstance;
+}
+
 app.post('/api/export', async (req, res) => {
   // Carrega puppeteer e chromium só quando necessário
   if (!puppeteer) puppeteer = require('puppeteer-core');
@@ -131,7 +149,8 @@ app.post('/api/export', async (req, res) => {
     }
 
     const zip = new JSZip();
-    const BATCH_SIZE = 5;
+    const browser = await getBrowser();
+    const BATCH_SIZE = 3; // Reduzido para ambientes com pouca memória
 
     for (let i = 0; i < storiesCopy.length; i++) {
       const story = storiesCopy[i];
@@ -163,32 +182,16 @@ app.post('/api/export', async (req, res) => {
         // Limpa a fotoUrl do story após gerar o HTML para limpar a memória o mais cedo possível
         storiesCopy[i].fotoUrl = null;
         currentFotoUrl = null;
-  
-        const browser = await puppeteer.launch({
-          args: [
-            ...chromium.args,
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--single-process',
-            '--no-zygote',
-            '--memory-pressure-off',
-          ],
-          defaultViewport: { width: 1080, height: 1920 },
-          executablePath: await chromium.executablePath(),
-          headless: true,
-        });
-  
+
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'domcontentloaded' });
   
-        await page.evaluate(() =>
-          new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
-        );
+        // Garante que as fontes carregaram
+        await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+        await page.evaluate(async () => { await document.fonts.ready; });
   
         const screenshot = await page.screenshot({ type: 'png' });
-        await browser.close();
+        await page.close();
         
         const tpl = story.template || 'A';
         zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
