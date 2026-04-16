@@ -5,6 +5,7 @@ const multer  = require('multer');
 const puppeteer = require('puppeteer-core');
 const chromium  = require('@sparticuz/chromium');
 const JSZip     = require('jszip');
+const { execSync } = require('child_process');
 
 let renderTemplate;
 (async () => {
@@ -24,6 +25,18 @@ process.env.TMPDIR = TMP_DIR;
 [UPLOADS_DIR, FOTOS_DIR, LOGOS_DIR, TMP_DIR].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
+
+// ─── Auto-Build do Frontend (Resolve o problema do index.html na Hostinger) ───
+const distPath = path.join(projectRoot, 'dist');
+if (!fs.existsSync(path.join(distPath, 'index.html'))) {
+  console.log('⚠️ Frontend (dist) não encontrado. Rodando Vite build automaticamente...');
+  try {
+    execSync('npm run build', { cwd: projectRoot, stdio: 'inherit' });
+    console.log('✅ Frontend compilado com sucesso!');
+  } catch (e) {
+    console.error('❌ Falha ao compilar o frontend:', e.message);
+  }
+}
 
 const DB_FILE = path.join(projectRoot, 'data', 'projects.json');
 if (!fs.existsSync(path.dirname(DB_FILE))) {
