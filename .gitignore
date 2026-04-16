@@ -8,7 +8,4 @@
 .env
 
 # Production build folder
-/dist
-
-# Banco de dados embutido
 data/
