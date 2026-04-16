@@ -6,7 +6,7 @@ import { join, extname, parse, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Readable } from 'stream'
 import JSZip from 'jszip'
-import { renderTemplate } from '../src/templates/index.js'
+import { renderTemplate } from '../src/templates/index.mjs'
 
 // CORREÇÃO: Usar puppeteer-core e o chromium otimizado para nuvem
 import chromium from '@sparticuz/chromium'

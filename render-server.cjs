@@ -17,7 +17,7 @@ let puppeteer, chromium;
 // Import dinâmico dos templates ESM
 let renderTemplate;
 (async () => {
-  const mod = await import('./src/templates/index.js');
+  const mod = await import('./src/templates/index.mjs');
   renderTemplate = mod.renderTemplate;
 })();
 
