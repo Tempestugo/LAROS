@@ -5,10 +5,12 @@ import { createReadStream, existsSync, mkdirSync, readdirSync, readFileSync } fr
 import { join, extname, parse, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { Readable } from 'stream'
-
-import puppeteer from 'puppeteer'
 import JSZip from 'jszip'
 import { renderTemplate } from '../src/templates/index.js'
+
+// CORREÇÃO: Usar puppeteer-core e o chromium otimizado para nuvem
+import chromium from '@sparticuz/chromium'
+import puppeteer from 'puppeteer-core'
 
 // csv-parser é CommonJS — importamos com createRequire
 import { createRequire } from 'module'
@@ -114,15 +116,13 @@ app.get('/api/logos', (req, res) => {
 let browserInstance = null;
 async function getBrowser() {
   if (!browserInstance) {
+    // CORREÇÃO: Usar os parâmetros do @sparticuz/chromium para garantir compatibilidade
     browserInstance = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage', // Usa /tmp em vez de /dev/shm para salvar RAM
-        '--disable-gpu',           // Desativa GPU, essencial em servidores sem placa gráfica
-        '--no-zygote'              // Economiza um pouco de footprint de memória
-      ]
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
   }
   return browserInstance;

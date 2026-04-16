@@ -104,6 +104,25 @@ app.post('/api/upload/csv', uploadCsv.single('csv'), (req, res) => {
   res.json({ content: req.file.buffer.toString('utf8') });
 });
 
+// ─── Puppeteer Singleton (Otimização de Memória para Hostinger) ───────────────
+let browserInstance = null;
+async function getBrowser() {
+  if (!browserInstance) {
+    console.log('🚀 Lançando nova instância do navegador...');
+    browserInstance = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: { width: 1080, height: 1920 },
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    });
+    browserInstance.on('disconnected', () => {
+      console.log('⚠️ Navegador desconectado. A instância será recriada na próxima requisição.');
+      browserInstance = null;
+    });
+  }
+  return browserInstance;
+}
+
 app.post('/api/export', async (req, res) => {
   const { stories, logoUrl, projectName } = req.body;
   if (!stories || !Array.isArray(stories)) {
@@ -112,14 +131,8 @@ app.post('/api/export', async (req, res) => {
 
   if (!renderTemplate) return res.status(503).json({ error: 'Templates ainda carregando, tente novamente' });
 
-  let browser;
   try {
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: { width: 1080, height: 1920 },
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    });
+    const browser = await getBrowser(); // Usa a instância única
     const page = await browser.newPage();
 
     const zip = new JSZip();
@@ -129,16 +142,16 @@ app.post('/api/export', async (req, res) => {
       const html = renderTemplate(story, logoUrl);
 
       await page.setContent(html, { waitUntil: 'domcontentloaded' });
-      await page.evaluate(() =>
-        new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
-      );
+      // Garante scripts e fontes (corrige quadrados/emojis)
+      await page.evaluate(() => new Promise(r => requestAnimationFrame(r)));
+      await page.evaluate(async () => { await document.fonts.ready; });
 
       const screenshot = await page.screenshot({ type: 'png' });
       const tpl = story.template || 'A';
       zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
     }
 
-    await browser.close();
+    await page.close(); // Fecha apenas a aba, mantendo o navegador aberto
 
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     res.set({
@@ -148,7 +161,6 @@ app.post('/api/export', async (req, res) => {
     res.send(zipBuffer);
 
   } catch (err) {
-    if (browser) await browser.close().catch(() => {});
     console.error('Erro na exportação:', err);
     res.status(500).json({ error: err.message });
   }

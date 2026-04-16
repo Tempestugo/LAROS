@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer');
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 const csv = require('csv-parser');
 const path = require('path');
@@ -700,9 +701,13 @@ async function gerarImagens(lista) {
   const logoUrl  = toDataUrl(logoPath, 'image/jpg');
   if (!logoUrl) console.log('⚠️  /assets/logo.jpg não encontrada — stories sem logo.');
 
+  // CORREÇÃO: Usar os mesmos parâmetros do servidor para consistência
   const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--allow-running-insecure-content']
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
   });
   const page    = await browser.newPage();
   await page.setViewport({ width: 1080, height: 1920 });
