@@ -727,6 +727,7 @@ async function gerarImagens(lista) {
 
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await page.evaluate(async () => { await document.fonts.ready; });
 
     const outFile = path.join(FOLDER_OUTPUT, `story_${String(i+1).padStart(2,'0')}_T${item.template}.png`);
     await page.screenshot({ path: outFile });

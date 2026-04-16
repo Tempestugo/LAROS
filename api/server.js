@@ -110,15 +110,30 @@ app.get('/api/logos', (req, res) => {
   res.json({ logos })
 })
 
+// ─── Puppeteer Singleton (Otimização de Memória 500MB) ────────────────────────
+let browserInstance = null;
+async function getBrowser() {
+  if (!browserInstance) {
+    browserInstance = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage', // Usa /tmp em vez de /dev/shm para salvar RAM
+        '--disable-gpu',           // Desativa GPU, essencial em servidores sem placa gráfica
+        '--no-zygote'              // Economiza um pouco de footprint de memória
+      ]
+    });
+  }
+  return browserInstance;
+}
+
 // ─── Exportação via Puppeteer ─────────────────────────────────────────────────
 app.post('/api/export', async (req, res) => {
   const { stories, logoUrl, projectName } = req.body;
   
   try {
-    const browser = await puppeteer.launch({ 
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    const browser = await getBrowser(); // Usa a instância única em vez de criar várias
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920 });
 
@@ -132,13 +147,15 @@ app.post('/api/export', async (req, res) => {
       
       // Duplo rAF para garantir que scripts inline do Template B executam
       await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+      // Garante que todas as fontes (@import web fonts) terminaram de baixar e renderizar
+      await page.evaluate(async () => { await document.fonts.ready; });
 
       const screenshot = await page.screenshot({ type: 'png' });
       const tpl = story.template || 'A';
       zip.file(`story_${String(i + 1).padStart(2, '0')}_T${tpl}.png`, screenshot);
     }
 
-    await browser.close();
+    await page.close(); // Fecha apenas a página/aba. Mantém o navegador vivo!
 
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
     res.set({
@@ -157,10 +174,7 @@ app.post('/api/export/single', async (req, res) => {
   const { story, logoUrl } = req.body;
   
   try {
-    const browser = await puppeteer.launch({ 
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    const browser = await getBrowser(); // Instância compartilhada
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920 });
 
@@ -170,9 +184,11 @@ app.post('/api/export/single', async (req, res) => {
     
     // Duplo rAF para garantir que scripts inline do Template B executam
     await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    // Garante as fontes e emojis
+    await page.evaluate(async () => { await document.fonts.ready; });
 
     const screenshot = await page.screenshot({ type: 'png' });
-    await browser.close();
+    await page.close(); // Limpa a memória da aba
 
     res.set({
       'Content-Type': 'image/png',
