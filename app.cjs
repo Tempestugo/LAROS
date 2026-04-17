@@ -3,4 +3,4 @@
 // Este arquivo contorna o problema fazendo o import dinâmico do servidor real.
 // Restart forçado para o Phusion Passenger carregar os templates .mjs
 
-import('./api/server.js').catch(err => console.error("Erro ao iniciar o servidor:", err));
+import('./api/server.mjs').catch(err => console.error("Erro ao iniciar o servidor:", err));
