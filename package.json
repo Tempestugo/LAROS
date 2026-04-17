@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"node api/server.js\" \"vite\"",
     "build": "vite build",
-    "start": "node api/server.js",
+    "start": "node app.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
