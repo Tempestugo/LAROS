@@ -8,5 +8,6 @@
 .env
 
 /backup_projeto
+backup_projeto
 
 # Production build folder
