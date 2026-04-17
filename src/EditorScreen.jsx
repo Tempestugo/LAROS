@@ -67,8 +67,9 @@ const sanitizeColor = (color) => {
   return '#c47b2b';
 };
 
-// Detecta se está rodando no PC ou em Produção para apontar para a API correta
-const API_BASE_URL = import.meta.env.DEV ? 'http://localhost:3001' : 'https://laros.onrender.com';
+// URLs fixas para garantir o roteamento correto
+const HOSTINGER_URL = 'https://lightblue-jaguar-801108.hostingersite.com';
+const API_BASE_URL = 'https://laros.onrender.com';
 
 export default function EditorScreen({ project, setProjects, setActiveProjectId }) {
   const csvInputRef = useRef(null);
@@ -100,6 +101,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
   const handleCsvUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const prepareImageUrl = (url) => {
+      if (!url) return null;
+      if (url.startsWith('/uploads/')) return HOSTINGER_URL + url;
+      return url;
+    };
 
     try {
       // 1. Busca fotos atuais no servidor (Tolerante a falhas se o backend estiver em baixo)
@@ -305,14 +312,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         template:     story.template,
         endereco:     story.endereco,
         hideLogo:     story.hideLogo,
-        // Envia o nome do arquivo em vez do base64 inteiro
-        fotoFilename: story.fotoUrl?.startsWith('/uploads/') 
-          ? story.fotoUrl.split('/').pop()  // pega só o nome do arquivo da URL
-          : '',
-        // Mantém fotoUrl só se não tiver filename (fallback para fotos locais sem upload)
-        fotoUrl: story.fotoUrl?.startsWith('/uploads/') 
-          ? null  // tem filename, não precisa do base64
-          : (story.fotoUrl || null),  // foto local em base64, envia como estava
+        fotoUrl:      prepareImageUrl(story.fotoUrl),
       }));
 
       const res = await fetch(`${API_BASE_URL}/api/export`, {
@@ -320,8 +320,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stories: storiesParaExport,
-          logoFilename: project.logoFilename || null,
-          logoUrl: project.logoFilename ? null : (project.logoUrl || null),
+          logoUrl: prepareImageUrl(project.logoUrl),
           projectName: project.name,
         }),
       });
@@ -349,6 +348,12 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
 
     setSaveStatus(`Exportando #${storyIndexToExport + 1}...`);
 
+    const prepareImageUrl = (url) => {
+      if (!url) return null;
+      if (url.startsWith('/uploads/')) return HOSTINGER_URL + url;
+      return url;
+    };
+
     try {
       const storyParaExport = {
         titulo:       storyToExport.titulo,
@@ -358,12 +363,7 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         template:     storyToExport.template,
         endereco:     storyToExport.endereco,
         hideLogo:     storyToExport.hideLogo,
-        fotoFilename: storyToExport.fotoUrl?.startsWith('/uploads/') 
-          ? storyToExport.fotoUrl.split('/').pop()  
-          : '',
-        fotoUrl: storyToExport.fotoUrl?.startsWith('/uploads/') 
-          ? null  
-          : (storyToExport.fotoUrl || null),  
+        fotoUrl:      prepareImageUrl(storyToExport.fotoUrl),
       };
 
       const res = await fetch(`${API_BASE_URL}/api/export`, {
@@ -371,10 +371,8 @@ export default function EditorScreen({ project, setProjects, setActiveProjectId 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stories: [storyParaExport],
-          logoFilename: project.logoFilename || null,
-          logoUrl: project.logoFilename ? null : (project.logoUrl || null),
+          logoUrl: prepareImageUrl(project.logoUrl),
           projectName: project.name,
-          hostingerBase: 'https://lightblue-jaguar-801108.hostingersite.com',
         }),
       });
 
